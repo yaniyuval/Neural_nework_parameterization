@@ -1,0 +1,21 @@
+! Dummy Interface the case when no isccp-simulator is compiled
+
+module isccp
+implicit none
+public :: isccp_get, isccp_write, isccp_zero
+CONTAINS
+subroutine isccp_zero()
+end subroutine isccp_zero
+subroutine isccp_get ()
+end subroutine isccp_get
+subroutine isccp_write()
+end subroutine isccp_write
+end module isccp
+
+module isccpTables
+implicit none
+public :: isccp_tables_init
+CONTAINS
+subroutine isccp_tables_init
+end subroutine isccp_tables_init
+end module isccpTables
