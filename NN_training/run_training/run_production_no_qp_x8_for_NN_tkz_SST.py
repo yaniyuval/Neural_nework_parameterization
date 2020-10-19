@@ -124,8 +124,6 @@ do_wind_input = False #Yani added
 do_diffution=False
 
 
-# input_vert_vars = ['Tin','qin','uin','vin','usurf','latin'] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# output_vert_vars = ['qsout']
 input_vert_vars = ['Tin','qin','uin','vin_minusSH','usurf','SST'] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
 output_vert_vars = ['tsurf','qsurf','tkz']
 dim1 = 15
@@ -133,22 +131,6 @@ dim2 = dim1-1
 input_vert_dim = [dim1,dim1,dim1,dim1,1,1] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
 output_vert_dim = [1,1,dim1]
 
-#
-# input_vert_dim = [48,48,48,48,1] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# output_vert_dim = [48,48,1]
-# input_vert_vars = ['Tin','qin','uin','vin','usurf'] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# output_vert_vars = ['Tout','qout','qsout']
-
-# input_vert_dim = [48,48,48,48,48,1] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# output_vert_dim = [48,48,1]
-# input_vert_vars = ['Tin','qin','uin','vin','win','usurf'] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# output_vert_vars = ['Tout','qout','qsout']
-
-# input_vert_dim = [48,48,48,48,48,1] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# output_vert_dim = [48,48]
-# # input_vert_vars = ['Tin','qin'] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# input_vert_vars = ['T_z','q_z','u_z','v_z','w_z','u_surf'] #Dependent on the scenario we chose to model. This should give some flexibility to our coding.
-# output_vert_vars = ['Tout','qout']
 
 rewight_outputs = False #If I want to give more wight to certain features.
 weight_list = [1,1]
@@ -172,15 +154,4 @@ ml_train_nn.train_wrapper(f_ppi, o_ppi, training_expt1, input_vert_dim, output_v
                        n_in = sum(input_vert_dim), n_out = sum(output_vert_dim),n_layers=5, output_extreme_flag = True,
                        batch_norm = flag_dict['batch_norm'])
 
-    #                   read_from_whole_data=read_from_whole_data)
-
-#ml_train.train_wrapper(f_ppi, o_ppi, training_expt2,
-#                       max_z=max_z, 
-#                       do_nn = False, n_trees = n_trees, 
-#                       min_samples_leaf = min_samples_leaf,
-#                       n_trn_exs=n_trn_exs, 
-#                       plot_training_results=False,
-#                       do_train=do_train,
-#                       use_rh=use_rh,
-#                       no_cos=no_cos)
 

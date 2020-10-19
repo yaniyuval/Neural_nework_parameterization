@@ -102,27 +102,3 @@ ml_io_no_qp_flux_nn.build_training_dataset(training_expt1, start_time, end_time,
                              do_shuffle=do_shuffle, flag_dict =flag_dict,is_cheyenne=is_cheyenne, rewight_outputs=True  )
 
 
-# sep_out.build_training_dataset_separate_out(training_expt1, start_time, end_time, interval, n_x_samp=n_x_samp, train_size=train_size,
-#                              do_shuffle=do_shuffle, flag_dict =flag_dict,is_cheyenne=is_cheyenne  )
-#
-# ll = ['Tin', 'qin', 'T_grad', 'q_grad','uin','vin','win','usurf','Tout','qout','Tout_adv','qout_adv','Tout_adv_x','qout_adv_x','Tout_adv_y','qout_adv_y','Tout_mic','qout_mic','Tout_dif','qout_dif','Tout_dif_x','qout_dif_x','Tout_dif_y','qout_dif_y','Tout_dif_surf_cor','qout_dif_surf_cor','Tout_strat_cor','qout_strat_cor','Tout_rad','Tout_cond','qSurfout','qSurfout_correction','precip_out','y', 'z', 'p', 'rho']
-
-
-# ml_io.build_training_dataset(training_expt1, start_time, end_time, interval, n_x_samp=n_x_samp, train_size=train_size, do_wind_input=do_wind_input,
-#                              do_shuffle=do_shuffle, do_z_diffusion=do_z_diffusion, do_q_T_surf_fluxes=do_q_T_surf_fluxes, do_surf_wind=do_surf_wind,
-#                              do_q_surf_fluxes_out=do_q_surf_fluxes_out,
-#                              do_sedimentation = do_sedimentation,
-#                              do_radiation_output = do_radiation_output,
-#                              do_fall_tend = do_fall_tend,
-#                              do_qp_as_var = do_qp_as_var,
-#                              Tin_feature=Tin_feature,
-#                              qin_feature = qin_feature,
-#                              Tin_z_grad_feature = Tin_z_grad_feature,
-#                              qin_z_grad_feature = qin_z_grad_feature,
-#                              predict_tendencies = predict_tendencies,
-#                              do_flux = do_flux,
-#                              do_hor_advection = do_hor_advection,
-#                              do_hor_diffusion=do_hor_diff,
-#                              do_qp_diff_corr_to_T=do_qp_diff_corr_to_T,
-#                              do_q_T_surf_fluxes_correction=do_q_T_surf_fluxes_correction)
-#ml_io.build_training_dataset(training_expt2, start_time, end_time, interval, n_x_samp=n_x_samp)
