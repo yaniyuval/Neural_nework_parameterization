@@ -9,5 +9,63 @@ The codes are divided to four main directories:
 The high-resolution simulation output and a readme.txt file describing the high-resolution data is found at [this google drive](https://drive.google.com/drive/folders/1TRPDL6JkcLjgTHJL9Ib_Z4XuPyvNVIyY).
 
 
-The processed data from simulations with neural-network parameterizaiton is found at the data library. 
+The processed data from simulations with neural-network parameterizaiton is found at the data library - data_x8_x16_NN_log.
+In this library there are different libraries for different simulations desribed in the manuscript:
+data_x8_5_layers - data from the x8(96km grid spacing) with neural-network parameterization (5 layers) simulation 
+data_x8_4_layers - data from the x8(96km grid spacing) with neural-network parameterization (4 layers) simulation
+data_x8_3_layers - data from the x8(96km grid spacing) with neural-network parameterization (3 layers) simulation
+data_x8_2_layers - data from the x8(96km grid spacing) with neural-network parameterization (2 layers) simulation
+
+data_16_missing_bits_out_in_only - data from the x8(96km grid spacing) with neural-network parameterization (5 layers) simulation  with reduced precision (7 bit in the mantissa)
+data_18_missing_bits_out_in_only - data from the x8(96km grid spacing) with neural-network parameterization (5 layers) simulation  with reduced precision (5 bit in the mantissa)
+data_20_missing_bits_out_in_only - data from the x8(96km grid spacing) with neural-network parameterization (5 layers) simulation  with reduced precision (3 bit in the mantissa)
+data_22_missing_bits_out_in_only - data from the x8(96km grid spacing) with neural-network parameterization (5 layers) simulation  with reduced precision (1 bit in the mantissa)
+
+data_rf_x8_no_qp - data from the x8(96km grid spacing) with random forest parameterization
+data_x8_5_layers_solin - data from the x8(96km grid spacing) with neural-network parameterization (5 layers) simulation with solar insolation as feature instead of distance from the equator
+
+data_x16_5_layers - data from the x16(192km grid spacing) with neural-network parameterization (5 layers) simulation 
+
+Each folder contain an netcdf file with the following data:
+x -  longitudinal coordinate (units:meters)
+y - latitudinal coordinate (units:meters)
+z(z) - vertical coordinate (units:meters)
+The time and zonal average (taken from 3-hourly snapshot over 500 days):
+	 U(y, z) - zonal wind
+	 V(y, z) - meridional wind
+	 W(y, z) - vertical wind
+	 U2(y, z) - zonal wind squared
+	 V2(y, z) - meridional wind squared
+	 W2(y, z) - vertical wind squared
+	 T(y, z) - temperature 
+	 QV(y, z) - water vapor
+	 QC(y, z) - cloud water
+	 QI(y, z) - cloud ice
+	 QP(y, z) - precipitable water
+	 RH(y, z) - PLEASE IGNORE
+	 P(z) - PLEASE IGNORE
+	 y_coarse - PLEASE IGNORE
+	 y_sim - PLEASE IGNORE
+	 precip_avg_coarse - mean precipitation from the coarse-grained high-resolution data
+	 precip_avg_low - - mean precipitation from the low-resolution data (x8 for x8 simulations, x16 for x16 simulaitons)
+	 precip_avg_rf - mean precipitation from the low-resolution data with Neural network (OR random forest)bparameterization (x8 for x8 simulations, x16 for x16 simulaitons)
+	 precip_xtreme_coarse -PLEASE IGNORE
+	 precip_xtreme_low - PLEASE IGNORE
+	 precip_xtreme_rf - PLEASE IGNORE
+	 bin_dim_full(bin_dim_full) - the bins used for calculating precipitaiton rate frequency (not used in the manuscript - bin every 1 mm/day)
+	 precip_dist_full(bin_dim_full) - the number of prcipitation rate events in each bin for the neural network (random fores) simulation (not used in the manuscript- bin every 1 mm/day)
+	 precip_dist_trop_full(bin_dim_full)  - the number of prcipitation rate events (only in the tropics) in each bin for the neural network (random fores) simulation (not used in the manuscript- bin every 1 mm/day)
+	 precip_dist_ref(bin_dim_full) - the number of prcipitation rate events in each bin for the low-resolution simulation (same resolution as the neural nework simulation) (not used in the manuscript- bin every 1 mm/day)
+	 precip_dist_trop_ref(bin_dim_full) - the number of prcipitation rate events (only in the tropics) in each bin for the low-resolution simulation (same resolution as the neural nework simulation) (not used in the manuscript- bin every 1 mm/day)
+	 precip_dist_ref_high(bin_dim_full) - the number of prcipitation rate events in each bin for the coarse-grained high-resolution simulation (not used in the manuscript- bin every 1 mm/day)
+	 precip_dist_trop_ref_high(bin_dim_full) - the number of prcipitation rate events (only in the tropics) in each bin for the coarse-grained high-resolution simulation (not used in the manuscript- bin every 1 mm/day)
+	 bin_dim_full_log(bin_dim_full_log) - the bins used for calculating precipitation distdibtution
+	 precip_dist_full_log(bin_dim_full_log) - the number of prcipitation rate events in each bin for the neural network (random fores) simulation
+	 precip_dist_trop_full_log(bin_dim_full_log) - the number of prcipitation rate events (only in the tropics) in each bin for the neural network (random fores) simulation
+	 precip_dist_ref_log(bin_dim_full_log) - the number of prcipitation rate events in each bin for the low-resolution simulation (same resolution as the neural nework simulation)
+	 precip_dist_trop_ref_log(bin_dim_full_log) - the number of prcipitation rate events (only in the tropics) in each bin for the low-resolution simulation (same resolution as the neural nework simulation)
+	 precip_dist_ref_high_log(bin_dim_full_log) - the number of prcipitation rate events in each bin for the coarse-grained high-resolution simulation
+	 precip_dist_trop_ref_high_log(bin_dim_full_log) - the number of prcipitation rate events (only in the tropics) in each bin for the coarse-grained high-resolution simulation
+
+
 
