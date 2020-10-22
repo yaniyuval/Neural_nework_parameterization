@@ -4,14 +4,14 @@ Here we have the codes,simulaiton processed data and neural network parameteriza
 
 ### code
 The codes are divided to three main directories:
-- sam_code_NN: Fortran code with all changes done to SAM used in the simulations (except for the reduced predcision simulations). 
- - The subdirectory sam_cases contains the namelist (prm) and neural network subroutines (nn_convection_flux.f90, nn_diffusion.f90) for the runs used in the mauscript. The subdirectories in this directories have the naming  convections: 
-  - run_files_x8_N_layers for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (N layers) simulation
-  - run_files_N_missing_bits_out_in_only for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (5 layers) simulation with 23-N bits in the mantissa
-- NN_training: python code used for creating all Neural Networks used in the manuscript. There are two directories here.
- -  run_training:  examples of the input files used to train the NNs (first the files starting with 'build' were run, and later the files starting with 'run'). 
- - src: python code to process the coarse-grained high-resolution data and to train the neural networks. 
-- high_res_processing_code: matlab code used to calculate the coarse-grained and resolved tendencies. This code was used on the high-resolution data. 
+1. sam_code_NN: Fortran code with all changes done to SAM used in the simulations (except for the reduced predcision simulations). 
+   - The subdirectory sam_cases contains the namelist (prm) and neural network subroutines (nn_convection_flux.f90, nn_diffusion.f90) for the runs used in the mauscript. The subdirectories in this directories have the naming  convections: 
+    - run_files_x8_N_layers for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (N layers) simulation
+    - run_files_N_missing_bits_out_in_only for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (5 layers) simulation with 23-N bits in the mantissa
+2. NN_training: python code used for creating all Neural Networks used in the manuscript. There are two directories here.
+   - run_training:  examples of the input files used to train the NNs (first the files starting with 'build' were run, and later the files starting with 'run'). 
+   - src: python code to process the coarse-grained high-resolution data and to train the neural networks. 
+3. high_res_processing_code: matlab code used to calculate the coarse-grained and resolved tendencies. This code was used on the high-resolution data. 
 The high-resolution simulation output and a readme.txt file describing the high-resolution data is found at [this google drive](https://drive.google.com/drive/folders/1TRPDL6JkcLjgTHJL9Ib_Z4XuPyvNVIyY).
 
 ### trained neural networks
@@ -40,7 +40,7 @@ Each folder contain an netcdf file with the following data:
 
 The time and zonal average (taken from 3-hourly snapshot over 500 days):
 - U(y, z) - zonal wind
--  V(y, z) - meridional wind
+- V(y, z) - meridional wind
 - W(y, z) - vertical wind
 - U2(y, z) - zonal wind squared
 - V2(y, z) - meridional wind squared
