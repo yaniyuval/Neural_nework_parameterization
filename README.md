@@ -1,16 +1,24 @@
 # Use of neural networks for stable, accurate and physically consistent parameterization of subgrid atmospheric processes with good performance at reduced precision
 
-Here we have the codes used in the manuscript ``Use of neural networks for stable, accurate and physically consistent parameterization of subgrid atmospheric processes with good performance at reduced precision''. The codes are divided to three main directories:
-- sam_code_NN: Fortran code with all changes done to SAM used in the simulations (except for the reduced predcision simulations). The subdirectory sam_cases contains the namelist (prm) and neural network subroutines (nn_convection_flux.f90, nn_diffusion.f90) for the runs used in the mauscript. The subdirectories in this directories have the naming  convections:
-  -run_files_x8_N_layers for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (N layers) simulation
-  -run_files_N_missing_bits_out_in_only for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (5 layers) simulation with 23-N bits in the mantissa
-<sam_code_NN_reduced_precision: Fortran code with all changes done to SAM when used reduced precision NNs.>
-- NN_training: python code used for creating all Neural Networks used in the manuscript. There are two directories here. In the run_training direcory there are examples of the inputs used to train the NNs (first the files starting with 'build' were run, and later the files starting with 'run'). in src directory there are the python code. 
-- high_res_processing_code: matlab code used to calculate the coarse-grained and resolved tendencies. This code was used on the high-resolution data which is found in the link below. 
+Here we have the codes,simulaiton processed data and neural network parameterizations used in the manuscript ``Use of neural networks for stable, accurate and physically consistent parameterization of subgrid atmospheric processes with good performance at reduced precision''. 
+
+### code
+The codes are divided to three main directories:
+- sam_code_NN: Fortran code with all changes done to SAM used in the simulations (except for the reduced predcision simulations). 
+ - The subdirectory sam_cases contains the namelist (prm) and neural network subroutines (nn_convection_flux.f90, nn_diffusion.f90) for the runs used in the mauscript. The subdirectories in this directories have the naming  convections: 
+  - run_files_x8_N_layers for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (N layers) simulation
+  - run_files_N_missing_bits_out_in_only for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (5 layers) simulation with 23-N bits in the mantissa
+- NN_training: python code used for creating all Neural Networks used in the manuscript. There are two directories here.
+ -  run_training:  examples of the input files used to train the NNs (first the files starting with 'build' were run, and later the files starting with 'run'). 
+ - src: python code to process the coarse-grained high-resolution data and to train the neural networks. 
+- high_res_processing_code: matlab code used to calculate the coarse-grained and resolved tendencies. This code was used on the high-resolution data. 
 The high-resolution simulation output and a readme.txt file describing the high-resolution data is found at [this google drive](https://drive.google.com/drive/folders/1TRPDL6JkcLjgTHJL9Ib_Z4XuPyvNVIyY).
 
-All the neural networks used in this study are saved in the library NNs.
+### trained neural networks
 
+All the neural networks used in this study are saved in the NNs directory.
+
+### processed data from simulations
 The processed data from simulations with neural-network parameterizaiton is found at the data library - data_x8_x16_NN_log.
 In this library there are different libraries for different simulations desribed in the manuscript:
 - data_x8_5_layers - data from the x8-NN simulation (96km grid spacing) with neural-network parameterization (5 layers) simulation 
