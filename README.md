@@ -11,7 +11,7 @@ The codes are divided to three main directories:
 2. NN_training: python code used for creating all Neural Networks used in the manuscript. There are two directories here.
    - run_training:  examples of the input files used to train the NNs (first the files starting with 'build' were run, and later the files starting with 'run'). 
    - src: python code to process the coarse-grained high-resolution data and to train the neural networks. 
-3. high_res_processing_code: matlab code used to calculate the coarse-grained and resolved tendencies. This code was used on the high-resolution data. 
+3. high_res_processing_code: matlab code used to calculate the coarse-grained and resolved tendencies, fluxes, diffusivity and fields. This code was used on the high-resolution data. 
 The high-resolution simulation output and a readme.txt file describing the high-resolution data is found at [this google drive](https://drive.google.com/drive/folders/1TRPDL6JkcLjgTHJL9Ib_Z4XuPyvNVIyY).
 
 ### trained neural networks
