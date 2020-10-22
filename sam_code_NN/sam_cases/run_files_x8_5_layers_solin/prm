@@ -1,0 +1,111 @@
+ &PARAMETERS
+
+ nrestart = 2,
+
+ caseid ='72x180x48',
+
+ CEM = .true.,
+ OCEAN = .true.,
+
+ dosgs		= .true.,
+ dosmagor	= .true.,
+ doscalar	= .false.,
+ dodamping 	= .true.,
+ doupperbound  	= .true.,
+ docloud 	= .true.,
+ doprecip 	= .true., 
+ dolongwave	= .true.,
+ doshortwave	= .true.,
+ dosurface 	= .true.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ donudging_uv   = .false.,
+ donudging_tq   = .false., 
+ doperpetual    = .true.,
+
+ dodynamicocean = .false.,
+ ocean_type = 3,
+
+ docoriolis	= .true.,
+ dowally	= .true.,
+ tauls = 432000.,
+ 
+ SFC_FLX_FXD    = .false.,
+ SFC_TAU_FXD    = .false.,
+
+ dorandomforest = .true.,
+ do_rf_diffusion= .false.,
+ do_rf_q_surf_flux = .false.,
+ rf_uses_rh     = .false.,
+ rf_uses_qp     = .false.,
+ do_wind_input_rf = .false.,
+ do_z_diffusion_rf = .false.,
+ do_q_T_surf_fluxes_rf = .false.,
+ do_surf_wind_rf = .false.,
+ do_q_surf_fluxes_out_rf = .true.,
+ do_sedimentation_rf = .false.,
+ do_fall_tend_rf = .false.,
+ do_radiation_output_rf = .false.,
+ rad_lev_pred = 30,
+ do_flux_rf = .false.,
+ do_hor_advection_rf = .false.,
+ do_hor_diffusion_rf = .false.,
+ Tin_feature_rf = .true.,
+ qin_feature_rf = .true.,
+ Tin_z_grad_feature_rf = .false.,
+ qin_z_grad_feature_rf = .false.,
+ input_ver_dim = 30,
+ predict_tendencies_rf = .true.,
+ do_tkh_z = .true.,
+ do_tkh_xy = .false.,
+ do_vert_wind_input_rf = .false.,
+ do_yin_input = .true.,
+ diffusivity_levels_rf = 15,
+ rf_filename_diffusion = '/net/aimsir/archive1/janniy/mldata/gcm_regressors/',
+rf_filename_tkh = '/glade/scratch/janniy/mldata_tmp/gcm_regressors/qobsFFTFTFTFF0FFTFTF15FFTFFFFTF815FFFFTTF00TFFT_X01_no_qp_no_adv_surf_Ntr13856040_F_Tin_qin_uin_vin_minusSH_usurf_SST_O_tsurf_qsurf_tkz_NN_layers5in62out17_BN_F_rm_ex_te81.nc',
+rf_filename = '/glade/scratch/janniy/mldata_tmp/gcm_regressors/qobsTTFFFFFTF30FFTFTF30TTFTFTFFF80FFFFTTF2699FFTF_X01_no_qp_no_adv_surf_F_Tin_qin_solin_O_Trad_rest_Tadv_qadv_qout_qsed_RESCALED_7epochs_NN_layers5in61out148_BN_F_te71.nc',
+ dx =   96000.,
+ dy =   96000.,
+ dt = 	  24.,
+
+ latitude0= 0.,
+ longitude0=0.,
+ nrad = 15,
+
+ day0=0.0,
+
+ nstop          = 2700000,
+ nprint         = 3600,
+ nstat          = 3600,
+ nstatfrq       = 10,
+
+ nsave2D        = 450,
+ nsave2Dstart   = 0,
+ nsave2Dend     = 2700000,
+
+ nsave3D        = 450,
+ nsave3Dstart   = 180000,
+ nsave3Dend     = 2700000,
+ save3Dbin      = .true.,
+
+
+
+/ &end 
+
+ &UWOPTIONS
+ ncyclemax	= 30,
+ dobetaplane  = .true.,
+ dobetafactor = .false.,
+ doequinox    = .true.,
+ nelapsemin	= 9999999,
+ dobulksfc      = .true.,
+ nwriterestart  = 36000,
+ ravefactor = 4.0,
+
+ doclearsky     = .false.,
+ dosaturatedwvp = .true.,
+ daremicrophysics = .false.,
+ dokruegermicro = .false.,
+
+/ &end 
