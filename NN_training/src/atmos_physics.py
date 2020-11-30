@@ -164,21 +164,3 @@ def sam_qsatw(t,p):
     q = 0.622 * esat/np.maximum(esat,p-esat)
 
     return q
-#
-# def precip_flux_from_tendency(qfall_tend, rho, z):
-#    lhs_tend = vertical_integral(t_tend,rho,z)
-#
-#    a_pr = 1.0/(tprmax-tprmin)
-#    omp = np.maximum(0.0,np.minimum(1.0,(tabs-tprmin)*a_pr))
-#    fac = (L + Lf*(1.0-omp))/cp
-#    # the following is correct since the sgs flux divergence in q_tend integrates to zero
-#    if 'qpout' in output_vert_vars:
-#         # precip = 0 # No need to correct for precipitation since it is in t_tend
-#         rhs_tend = -fac[:, 0] * vertical_integral(q_tend + o_dict['qpout'], rho, z)
-#    else:
-#         precip = calc_precip(q_tend,rho,z, output_vert_vars, o_dict)
-#         rhs_tend = fac[:,1]*precip
-#
-#    tend_normalized = (lhs_tend-rhs_tend)/vertical_integral(1.0, rho, z)
-#
-#    return tend_normalized

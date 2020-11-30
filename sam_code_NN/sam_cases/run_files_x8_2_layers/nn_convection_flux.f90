@@ -49,14 +49,6 @@ private
     real(4), allocatable, dimension(:)       :: yscale_mean
     real(4), allocatable, dimension(:)       :: yscale_stnd
 
-! Namelist:
-! nn_filename       data for random forest
-! no_ps             set scaled surface pressure to a constant (zero)
-! n_neurons         number of neurons
-! n_lev_nn          number of vertical levels used
-! y_standard_scaler use standard scaling for outputs
-! do_rh             use relative humidity instead of specific humidity
-
 
 !-----------------------------------------------------------------------
 
@@ -91,9 +83,6 @@ character(len=256) :: nn_filename
 !-------------allocate arrays and read data-------------------------
 
 
-!       nn_filename= '/glade/scratch/janniy/mldata_tmp/gcm_regressors/NN_tend_1_hidden_standard_15_23_in_23out_no_qp.nc'
-! if(masterproc)  write(*,*) nn_filename
-
     if(masterproc)  write(*,*) rf_filename
     nn_filename = rf_filename
 
@@ -122,10 +111,6 @@ character(len=256) :: nn_filename
      nrf = 30 ! Size in the vertical 
      nrfq = 29 !Size in the vertical  for advection
 
-
-! Open the file. NF90_NOWRITE tells netCDF we want read-only access
-! Get the varid of the data variable, based on its name.
-! Read the data.
 
       call check( nf90_open(     trim(nn_filename),NF90_NOWRITE,ncid ))
 
@@ -190,11 +175,9 @@ character(len=256) :: nn_filename
 !
 !   input:  tabs               absolute temperature 
 !           q                  total non-precipitating water
-!           qp                 precipitating water
 !           distance from equator
 !   changes: t                 liquid static energy as temperature
 !            q                 total non-precipitating water
-!            qp                precipitating water
 !
 !-----------------------------------------------------------------------
 !
@@ -275,8 +258,6 @@ character(len=256) :: nn_filename
         endif
         ! mod feature y
         if(do_yin_input) then
-         ! Changed to SOLIN!
-         !features(dim_counter+1) = real(solin_xy(i,j),4) ! real(abs(dy*(j+jt-(ny_gl+YES3D-1)/2-0.5))) 
          features(dim_counter+1) = real(abs(dy*(j+jt-(ny_gl+YES3D-1)/2-0.5)))
          dim_counter = dim_counter+1
          
@@ -292,11 +273,7 @@ character(len=256) :: nn_filename
 ! Apply trained regressor network to data using rectifier activation function
 ! forward prop to hiddelayer
 
-
-
         z1 = matmul( features, r_w1) + r_b1
-        !print *, 'SHAPE of Z1', shape(z1)
-! rectifier
         where (z1 .lt. 0.0)  z1 = 0.0
 
 ! forward prop to output layer
@@ -340,31 +317,28 @@ character(len=256) :: nn_filename
           end if
          end if
         end do 
-        do k=1,nrf-1 ! One level less than I actually use
+        do k=1,nrf-1
            t_tendency_adv(k) = - (t_flux_adv(k+1) - t_flux_adv(k)) * irhoadzdz(k)
            q_tendency_adv(k) = - (q_flux_adv(k+1) - q_flux_adv(k)) * irhoadzdz(k)
         end do
-        k = nrf  ! might want to do the case with all levels? 
+        k = nrf
         t_tendency_adv(k) = - (0.0 - t_flux_adv(k)) * irhoadzdz(k)
         q_tendency_adv(k) = - (0.0 - q_flux_adv(k)) * irhoadzdz(k)
 
-        !q_tend_tot(1:nrf) = q_tendency_auto(1:nrf) * dtn + q_tendency_adv(1:nrf) + q_tendency_sed(1:nrf) 
-!        t_tendency_sed(1:nrf) = -q_tendency_sed(1:nrf) * fac_cond ! This is a poor approximation - should in general have two outputs for the ice and cloud flux!
-! I think it would make more sense to limit the tendency due to flux 
         do k=1,nrf
          if (q(i,j,k).lt.-q_tendency_adv(k)) then
           q_tendency_adv(k) = -q(i,j,k)
          end if 
         end do
-        t(i,j,1:nrf) = t(i,j,1:nrf) + t_tendency_adv(1:nrf) !+ t_tendency_sed(1:nrf)
-        q(i,j,1:nrf) = q(i,j,1:nrf) + q_tendency_adv(1:nrf)!+q_tend_tot(1:nrf)!) + (q_tendency_auto(1:nrf) * dtn) !+ q_tendency_sed(1:nrf)
+        t(i,j,1:nrf) = t(i,j,1:nrf) + t_tendency_adv(1:nrf) 
+        q(i,j,1:nrf) = q(i,j,1:nrf) + q_tendency_adv(1:nrf)
 
 
         do k=1,nrf
          omp(k) = max(0.,min(1.,(tabs(i,j,k)-tprmin)*a_pr))
          fac(k) = (fac_cond + fac_fus * (1.0 - omp(k))) 
          if (q_tendency_auto(k).lt.0) then
-          q_tend_tot(k) = min(-q_tendency_auto(k) * dtn, q(i,j,k))!q_tendency_auto(1:nrf) * dtn + q_tendency_adv(1:nrf) + q_tendency_sed(1:nrf)       
+          q_tend_tot(k) = min(-q_tendency_auto(k) * dtn, q(i,j,k))
           q_tend_tot(k) = -q_tend_tot(k)
          else 
           q_tend_tot(k) = q_tendency_auto(k) * dtn 
@@ -372,10 +346,9 @@ character(len=256) :: nn_filename
         end do
 
  
-        q(i,j,1:nrf) = q(i,j,1:nrf) +q_tend_tot(1:nrf)!) + (q_tendency_auto(1:nrf) * dtn) !+ q_tendency_sed(1:nrf)
-        t(i,j,1:nrf) = t(i,j,1:nrf)  -q_tend_tot(1:nrf)*fac(1:nrf) !- (q_tendencyauto(1:nrf) * dtn)! + qp_tendency_fall(1:nrf)
+        q(i,j,1:nrf) = q(i,j,1:nrf) +q_tend_tot(1:nrf)
+        t(i,j,1:nrf) = t(i,j,1:nrf)  -q_tend_tot(1:nrf)*fac(1:nrf) 
 
-! Sedimentation - remember that at the moment the approximation for T is not good! In theory I should have both the cloud and ice sedimentation
       do k=2,nrf
          if (q_flux_sed(k).lt.0) then
           if ( q(i,j,k).lt.-q_flux_sed(k)* irhoadzdz(k)) then
@@ -388,30 +361,22 @@ character(len=256) :: nn_filename
          end if
         end do
 
-         do k=1,nrf-1 ! One level less than I actually use
+         do k=1,nrf-1
            q_tendency_sed(k) = - (q_flux_sed(k+1) - q_flux_sed(k)) * irhoadzdz(k)
-           !NEED TO VERIFY THAT I HAVE NO MISTAKE:
         end do
-        k = nrf  ! might want to do the case with all levels? 
+        k = nrf
         q_tendency_sed(k) = - (0.0 - q_flux_sed(k)) * irhoadzdz(k)
 
 
         do k=1,nrf
          if (q_tendency_sed(k).lt.0) then
-          q_tendency_sed(k) = min(-q_tendency_sed(k), q(i,j,k))!q_tendency_auto(1:nrf) * dtn + q_tendency_adv(1:nrf) + q_tendency_sed(1:nrf)       
+          q_tendency_sed(k) = min(-q_tendency_sed(k), q(i,j,k))
           q_tendency_sed(k) = -q_tendency_sed(k)
          end if
         end do
 
-!        do k=1,nrf-1 ! One level less than I actually use
-!           t_tendency_sed(k) =  (q_flux_sed(k+1)* fac(k+1) - q_flux_sed(k)* fac(k)) * irhoadzdz(k)
-!           !NEED TO VERIFY THAT I HAVE NO MISTAKE:
-!        end do
-!        k = nrf  ! might want to do the case with all levels? 
-!        t_tendency_sed(k) =  (0.0 - q_flux_sed(k)* fac(k)) * irhoadzdz(k)
-       ! t_tendency_sed(1:nrf) = -q_tendency_sed(1:nrf) * fac  ! This is a poor approximation - should in general have two outputs for the ice and cloud flux!
-        t(i,j,1:nrf) = t(i,j,1:nrf) - q_tendency_sed(1:nrf)*(fac_fus+fac_cond) ! Note that this is inaccurate ! 
-        q(i,j,1:nrf) = q(i,j,1:nrf) +q_tendency_sed(1:nrf)!) + (q_tendency_auto(1:nrf) * dtn) !+ q_tendency_sed(1:nrf)
+        t(i,j,1:nrf) = t(i,j,1:nrf) - q_tendency_sed(1:nrf)*(fac_fus+fac_cond) 
+        q(i,j,1:nrf) = q(i,j,1:nrf) +q_tendency_sed(1:nrf)
         
         t(i,j,1:nrf) = t(i,j,1:nrf) + t_rad_rest_tend(1:nrf)*dtn 
         
@@ -420,7 +385,7 @@ character(len=256) :: nn_filename
 
 
         do k=1, nrf
-            precsfc(i,j) = precsfc(i,j)-q_tend_tot(k)*adz(k)*dz*rho(k)*(1/dz)! removed the time step mult because q_tend_tot is already mult
+            precsfc(i,j) = precsfc(i,j)-q_tend_tot(k)*adz(k)*dz*rho(k)*(1/dz)
             prec_xy(i,j) = prec_xy(i,j)-q_tend_tot(k)*adz(k)*dz*rho(k)*(1/dz)
         end do
 
@@ -439,99 +404,6 @@ character(len=256) :: nn_filename
        end do
      end do
     
-!     t(i,j,1:nrf) = t(i,j,1:nrf)  + rad_tendency(1:nrf) * dtn     
-     !Bring to same units to where I plug it in the advecion scheme
-!     nn_T_adv_flux = nn_T_adv_flux*rev_dz
-!     nn_q_auto_flux = nn_q_auto_flux * dtn ! Converted to tendency with the correct time step
-!     nn_qp_fall_flux = nn_qp_fall_flux*rev_dz2 !Comment if I rebuild data - included because I did not analyze things well. 
-!if (jt==30.and.it==0) then
-!
-!write(*,*) 'The outputs:'
-!write(*,*) yscale_mean(1)
-!write(*,*) 'The outputs5 stnd:'
-!write(*,*) yscale_mean(5)
-!stop
-!end if
-!write(*,*) 'The outputs:'
-!write(*,*) (outputs(nrf+1:2*nrf) * yscale_q_stnd)  +  yscale_q_mean
-!
-!write(*,*) 'The outputs_out111:'
-!write(*,*) shape(solin_xy)
-!write(*,*) ny
-!write(*,*) solin_xy(1,:)
-!
-!!write(*,*) 'The inputs:'
-!!write(*,*) features
-!
-!write(*,*) 'r_w1:'
-!write(*,*) r_w1(1:3,1:3)
-!
-!write(*,*) 'r_w2:'
-!write(*,*) r_w2(1:3,1:3)
-!
-!write(*,*) 'r_w2_first:'
-!write(*,*) r_w2(1:3,1)
-!
-!
-!write(*,*) 'r_w2_second:'
-!write(*,*) r_w2(1:3,2)
-!
-!write(*,*) 'r_b1:'
-!write(*,*) r_b1(1:4)
-!
-!write(*,*) 'r_b2:'
-!write(*,*) r_b2(1:4)
-!
-!write(*,*) 'b_mean:'
-!write(*,*) batch_mean(1:4)
-!
-!write(*,*) 'b_stnd:'
-!write(*,*) batch_stnd(1:4)
-!
-!write(*,*) 'b_weight:'
-!write(*,*) batch_w(1:4)
-!
-!write(*,*) 'b_bias:'
-!write(*,*) batch_b(1:4)
-!
-!print *, 'SHAPE of Z1', shape(z1)
-!print *, 'SHAPE of Z2', shape(z2)
-!print *, 'SHAPE of r_w1', shape(r_w1)
-!print *, 'SHAPE of r_w2', shape(r_w2)
-!print *, 'SHAPE of outputs', shape(outputs)
-!print *, 'features(dim_counter) = ', features(dim_counter)
-!
-!open (unit = 7, file = "/glade/u/home/janniy/inputs3.txt", status='new')
-!write (7,*), features
-!close (7)
-!
-!open (unit = 8, file = "/glade/u/home/janniy/outputs3.txt", status='new')
-!write (8,*), outputs
-!close (8)
-!
-!
-!open (unit = 9, file = "/glade/u/home/janniy/z13.txt", status='new')
-!write (9,*), z1
-!close (9)
-!
-!open (unit = 10, file = "/glade/u/home/janniy/rw1_1.txt", status='new')
-!write (10,*), r_w1(:,1)
-!close (10)
-!
-!open (unit = 11, file = "/glade/u/home/janniy/rw1_2.txt", status='new')
-!write (11,*), r_w1(1,:)
-!close (11)
-!
-!
-!write(*,*) 'Who is in!!:',  jt, it
-!endif
-!!batch_mean)/ batch_stnd) * batch_w + batch_b
-!write(*,*) 'WTF:',  jt, it
-!stop
-!
-!endif
-
-
 
    end subroutine nn_convection_flux
 

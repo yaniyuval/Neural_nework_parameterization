@@ -8,21 +8,11 @@ use mse       ! peters
 use params, only : lcond   ! peters
 use uwpbl, only : uwpbldrv
 use microscaling ! JA
-!use random_forest_param ! pog
 use nn_convection_flux_mod
 use nn_diffusion_mod
 use random_forest_param_diffusion ! janniy
-!use random_forest_param_tkh       ! janniy
-
-
-
-!use random_forest_param_del ! pog
-
-!use diffuse_scalar_vert_flag_mod !Yani
 
 implicit none
-
-!public :: diffuse_scalar_vert_flag !Yani
 
 integer k, icyc, nn, nstatsteps, i,j
 real rrr, ranf_
@@ -71,7 +61,6 @@ else
 endif
 
 if(dorandomforest) then
-! call random_forest_init()
  call nn_convection_flux_init()
  if(.not.rf_uses_qp) then
   qp = 0 ! qp is not predicted 
@@ -83,7 +72,6 @@ if(do_z_diffusion_rf) then
 endif
 
 if(do_tkh_z) then
- !call random_forest_init_tkh()
  call nn_diffusion_init()
 endif
 
@@ -198,7 +186,7 @@ do k=1,nzm
          u_i(i,j,k) = u(i,j,k)
          v_i(i,j,k) = v(i,j,k)
          w_i(i,j,k) = w(i,j,k)
-         t_i(i,j,k) = tabs(i,j,k) ! - commented becasue  I wanted to run rf with t and not tabs.... 
+         t_i(i,j,k) = tabs(i,j,k)
          q_i(i,j,k) = q(i,j,k)
 	 qp_i(i,j,k) = qp(i,j,k)
        end do
@@ -408,29 +396,22 @@ do k=1,nzm
 
       if(dosgs) call boundaries(3)
 
-
       if(do_tkh_z) then !Janniy yani 
-       !call random_forest_tkh()
        call nn_diffusion()
       end if
 
 
-
-
       mseflag=1 ! peters
       call diffuse_scalar_vert_flag_surf_flag(t,fluxbt-uwpbl_fluxbt,fluxtt,tdiff,twsb, &
-                           t2lediff,t2lediss,twlediff,.true.) !Yani change the functio call 
+                           t2lediff,t2lediss,twlediff,.true.) 
 
-    !call diffuse_scalar(t,fluxbt-uwpbl_fluxbt,fluxtt,tdiff,twsb, &
-    !                       t2lediff,t2lediss,twlediff,.true.) !Yani change the functio call 
       do k=1,nzm
          total_water_evap = total_water_evap - &
                          sum(q(1:nx,1:ny,k))*adz(k)*dz *rho(k)
       end do
 
       mseflag=2 ! peters
-      if(.not.dokruegermicro) then !.and.((.not.do_rf_diffusion).or.(.not.dorandomforest))) then !bloss  Yani-I think the logic should be corrent - to consider to print something
-
+      if(.not.dokruegermicro) then
         call diffuse_scalar_vert_flag_surf_flag(q,fluxbq-uwpbl_fluxbq,fluxtq,qdiff,qwsb, &
                          q2lediff,q2lediss,qwlediff,.true.) !Yani change the functio call 
 
@@ -438,15 +419,6 @@ do k=1,nzm
         call random_forest_diffusion()
       end if 
 
-
-       !call diffuse_scalar(q,fluxbq-uwpbl_fluxbq,fluxtq,qdiff,qwsb, &
-       !                   q2lediff,q2lediss,qwlediff,.true.) !Yani change the functio call 
-  !    elseif((do_rf_diffusion).and.(.not.do_rf_q_surf_flux))  !Yani 
-  !     call diffuse_scalar_only_surf(q,fluxbq-uwpbl_fluxbq,fluxtq,qdiff,qwsb, &
-  !                        q2lediff,q2lediss,qwlediff,.true.)
-  !    elseif((do_rf_diffusion).and.(do_rf_q_surf_flux))  !Yani 
-  !     call diffuse_scalar_no_vert_diff(q,fluxbq-uwpbl_fluxbq,fluxtq,qdiff,qwsb, &
-  !                        q2lediff,q2lediss,qwlediff,.true.)
 
       !==============================================================
       elseif(dokruegermicro) then !bloss
@@ -477,8 +449,7 @@ do k=1,nzm
       if(docloud.and.doprecip) then
        if((.not.dorandomforest).or.(dorandomforest.and.rf_uses_qp)) then
         if(.not.dokruegermicro) then !bloss
-           !call diffuse_scalar(qp,fzero,fzero,qpdiff,qpwsb, &   
-           !                dummy,dummy,dummy,.false.)    !JY - changed to my diffusion scheme that can use the RF results
+           !JY - changed to my diffusion scheme that can use the RF results
 	   call diffuse_scalar_vert_flag_surf_flag(qp,fzero,fzero,qpdiff,qpwsb,dummy,dummy,dummy,.false.) 
         !==============================================================
         elseif(dokruegermicro) then !bloss
@@ -533,15 +504,11 @@ do k=1,nzm
         call cloud()
         if(doprecip) then
          if((.not.dorandomforest).or.(dorandomforest.and.rf_uses_qp)) then
-          call precip_proc() !-TRIED TO DO ONLY CORRECTION... JY Yani at the moment I substitute it.... 
+          call precip_proc() 
          end if
          if(dorandomforest) then 
-         ! call random_forest()
           call nn_convection_flux()
          end if
-     !    if(do_z_diffusion_rf) then !Janniy yani
-     !     call random_forest_diffusion()
-     !    end if 
         end if
       end if
 

@@ -47,17 +47,11 @@ def PlotAllFigs_nn(path_nn_stage2, est_str, datafile, do_nn, figpath, input_vert
     # Open the estimator and the preprocessing scheme
     base_dir = '/glade/scratch/janniy/'
 
-    # if exclusion_flag:
-    #     est_eval, _, errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho = \
-    #         pickle.load(open(base_dir + 'mldata_tmp/regressors/' + est_str + str(ind1_exc) + str(ind2_exc) +'.pkl', 'rb'))
-    # else:
 
     # Check how to upload my network...
     est_eval, _, errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho = \
         pickle.load(open(base_dir + 'mldata_tmp/regressors/' + est_str + '.pkl', 'rb'))
 
-    # test estimator working in SAM using example profile
-    # test_estimator(est_eval, f_ppi, o_ppi, f_pp, o_pp, z)
 
     # Load the data from the training/testing file
     f_scl, opred_scl, otrue_scl, f, opred, otrue = \
@@ -78,24 +72,15 @@ def PlotAllFigs_nn(path_nn_stage2, est_str, datafile, do_nn, figpath, input_vert
     if not os.path.exists(figpath):
         os.makedirs(figpath)
 
-    # # Write test/train score to file for future reference
-    # text_file = open(figpath + 'scores.txt', 'w')
-    # text_file.write('Score: %f' % est_eval.score(f_scl, otrue_scl))
     # text_file.close()
 
     ncfile = Dataset(figpath + 'data_test.nc', "w", format="NETCDF3_CLASSIC")
     ncfile.createDimension("tot_dim_column", sum(output_vert_dim))
     ncfile.createDimension("test_samples", None)
-    # nc_dim_column = ncfile.createVariable("tot_vert_dim_column", np.dtype('float32').char, ("tot_dim_column"))
-    # nc_dim_samples = ncfile.createVariable("tot_vert_dim_column", np.dtype('float32').char, ("test_samples"))
     nc_o_true = ncfile.createVariable("o_true", np.dtype('float32').char, ("test_samples", "tot_dim_column"))
     nc_o_pred = ncfile.createVariable("o_pred", np.dtype('float32').char, ("test_samples", "tot_dim_column"))
     nc_o_true[:] = otrue[:]
     nc_o_pred[:] = opred[:]
-    # nc_qp = ncfile.createVariable("qp_input", np.dtype('float32').char, ("test_samples", "tot_dim_column"))
-    # nc_u = ncfile.createVariable("u_input", np.dtype('float32').char, ("test_samples", "tot_dim_column"))
-    # nc_qp[:] = f[:,96:144]
-    # nc_u[:] = f[:,144:192]
     ncfile.description = 'blabla-janniy'
     ncfile.close
 
@@ -127,31 +112,6 @@ def PlotAllFigs_nn(path_nn_stage2, est_str, datafile, do_nn, figpath, input_vert
     print('Done with y-z and y plots.')
     print('Not making at the moment the importance plots...')
 
-    # print('Beginning to make importance plots...')
-    # # plot importance of features
-    #
-    # plot_importance_permute(figpath, f_scl, otrue_scl, est_eval, z, p, rho, use_rh, wind_input)
-    # plot_importance_precip_permute(figpath, f_scl, otrue_scl, est_eval, z, p, rho, f_ppi, f_pp, o_ppi, o_pp, use_rh, wind_input)
-    #
-    # if not do_nn:
-    #  plot_importance(figpath, est_eval, z, p, rho, use_rh, wind_input)
-    #  # plot linear response
-    #  plot_linear_response(figpath, f, est_eval, z, p, rho, f_ppi, f_pp, o_ppi, o_pp, use_rh, wind_input)
-    #
-    # # Plot model errors over iteration history for neural net
-    # if do_nn:
-    #  plot_model_error_over_time(errors, est_str, figpath)
-    #
-    # # Plot historgram showing how scaling changed character of input and output
-    # # data
-    # check_scaling_distribution(f, f_scl, otrue, otrue_scl, y,
-    #                            p, figpath, use_rh=use_rh, wind_input=wind_input)
-    # # Plot histogram showing how well true and predicted values match
-    # check_output_distribution(otrue, otrue_scl, opred, opred_scl,
-    #                           y, p, figpath)
-    # # Plot some example profiles
-    # plot_sample_profiles(20, f, otrue, opred, p, figpath, wind_input=wind_input)
-    # print('Done!')
 
 
 def plot_importance(figpath, est_eval, z, p, rho, use_rh, wind_input):
@@ -266,7 +226,6 @@ def plot_importance_precip_permute(figpath, f_scl, otrue_scl, est_eval, z, p, rh
     rescale = 1.0 / (rho * np.gradient(z))
 
     # use sqrt to compare with linear_response
-    # importance = np.sqrt(np.absolute(importance))
 
     fig = plt.figure(figsize=(3.0, 2.25))
 
@@ -443,8 +402,6 @@ def plot_linear_response(figpath, f, est_eval, z, p, rho, f_ppi, f_pp, o_ppi, o_
 
     ax2.set_ylim([np.amax(p), np.amin(p)])
     ax2.set_xlabel('Importance (non-dimensional)')
-    # ax2.legend(loc="upper right")
-    # ax2.legend(frameon=False)
     ax2.spines['right'].set_color('none')
     ax2.spines['top'].set_color('none')
 
@@ -453,7 +410,6 @@ def plot_linear_response(figpath, f, est_eval, z, p, rho, f_ppi, f_pp, o_ppi, o_
 
     plt.tight_layout()  # avoid overlap
     fig.savefig(figpath + 'linear_response_feature_importance.eps', bbox_inches='tight')
-    # fig.savefig(figpath + 'linear_response_feature_importance.png', bbox_inches='tight', dpi=600)
     plt.close()
 
 
@@ -461,11 +417,6 @@ def make_yz_plots(figpath, f_ppi, o_ppi, f_pp, o_pp, est_eval, y, z, p, rho, inp
                   input_vert_dim, output_vert_dim,
                   datafile, n_trn_exs, rain_only, no_cos, use_rh, wind_input=False, scale_per_column=False,
                   rewight_outputs=False, weight_list=[1, 1], do_nn=False):
-    # Load data at each level and y
-    # Tmean, qmean, Tvar, qvar, Tbias, qbias, rmseT, rmseq, rT, rq, Rsq_T, Rsq_q, Pmean_true, Pmean_pred, Pextreme_true, Pextreme_pred = \
-    #       ml_load.stats_by_yz(f_ppi, o_ppi, f_pp, o_pp, est_eval, y,
-    #                              z, rho, datafile, n_trn_exs, input_vert_vars, output_vert_vars, input_vert_dim, output_vert_dim, rain_only,
-    #                              no_cos, use_rh, wind_input=wind_input)
 
     output_stat_dict = \
         ml_load.stats_by_yz(f_ppi, o_ppi, f_pp, o_pp, est_eval, y,
@@ -478,22 +429,7 @@ def make_yz_plots(figpath, f_ppi, o_ppi, f_pp, o_pp, est_eval, y, z, p, rho, inp
     y_plot = (y - np.mean(y)) / 1e6  # in 1000 km
     # True means
 
-    # feature_list = ['_mean', '_var', '_bias', '_rmse', '_r', '_Rsq']
-    # for output_name, z_dim in zip(output_vert_vars, output_vert_dim):
-    #     for feature in feature_list:
-    #         output_stat_dict[output_name + feature] = np.zeros((len(y), z_dim))
-    #
-    # output_stat_dict['Pmean_true'] = np.zeros((len(y)))
-    # output_stat_dict['Pmean_pred'] = np.zeros((len(y)))
-    # output_stat_dict['Pextreme_true'] = np.zeros((len(y)))
-    # output_stat_dict['Pextreme_pred'] = np.zeros((len(y)))
     feature_list = ['_mean', '_bias', '_var', '_rmse', '_r', '_Rsq']
-    # feature_list = ['_mean', '_var', '_bias', '_rmse', '_r',' _Rsq']
-
-    # for out_feature,out_dim in zip(output_vert_vars,output_vert_dim):
-    #     if out_dim>1:
-    #         renorm_fact = per_day
-    #
 
     ncfile = Dataset(figpath + 'data_test.nc', "a")
     ncfile.createDimension("lat_dim", output_stat_dict[next(iter(output_stat_dict))].shape[0])
@@ -533,7 +469,6 @@ def make_yz_plots(figpath, f_ppi, o_ppi, f_pp, o_pp, est_eval, y, z, p, rho, inp
 
             # mask where variance is very low
             mask_too_low = 0.01
-            # too_low = np.nonzero(output_stat_dict[out_feature+feature_list[5]] < mask_too_low * np.mean(output_stat_dict[out_feature+feature_list[5]]))
             too_low = np.nonzero(output_stat_dict[out_feature + feature_list[2]] < mask_too_low * np.mean(
                 output_stat_dict[out_feature + feature_list[2]]))
             Rsq_feature = output_stat_dict[out_feature + feature_list[5]]
@@ -548,13 +483,6 @@ def make_yz_plots(figpath, f_ppi, o_ppi, f_pp, o_pp, est_eval, y, z, p, rho, inp
             fig.savefig(figpath + 'yz_' + out_feature + '_r_Rsq.eps', bbox_inches='tight')
             plt.close()
 
-            # fig, ax1, ax2 = plot_contour_Rsq_generalized(
-            #                              Rsq_feature.T * per_day, y_plot, z, p,
-            #                              avg_hem=False)
-            # ax1.set_title(r'$\Delta$ ' + out_feature + 'Rsq')
-            # plt.tight_layout()  # avoid overlap
-            # fig.savefig(figpath + 'yz_' + out_feature + '_Rsq.eps', bbox_inches='tight')
-            # plt.close()
 
 
         elif (
@@ -662,34 +590,6 @@ def make_yz_plots(figpath, f_ppi, o_ppi, f_pp, o_pp, est_eval, y, z, p, rho, inp
         ax2.set_title('(b) Humidity tendency', fontsize=8)
         fig.savefig(figpath + 'yz_Rsq.eps', bbox_inches='tight')
         plt.close()
-        # Mean precipitation
-        # plt.figure(figsize=(3.0,2))
-        # plt.plot(y_plot, Pmean_true*per_day, label='True')
-        # plt.plot(y_plot, Pmean_pred*per_day, label='Pred')
-        # plt.legend(loc="upper right")
-        # plt.legend(frameon=False)
-        # plt.xlabel('y (1000km)')
-        # plt.ylabel('mm $\mathregular{day^{-1}}$')
-        # ax = plt.gca()
-        # ax.spines['right'].set_color('none')
-        # ax.spines['top'].set_color('none')
-        # plt.tight_layout() # avoid overlap
-        # plt.savefig(figpath + 'precip_mean.eps', bbox_inches='tight')
-        # plt.close()
-        # # Precipitation extremes
-        # plt.figure(figsize=(3.0,2))
-        # plt.plot(y_plot, Pextreme_true*per_day, label='True')
-        # plt.plot(y_plot, Pextreme_pred*per_day, label='Pred')
-        # plt.legend(loc="upper right")
-        # plt.legend(frameon=False)
-        # plt.xlabel('y (1000km)')
-        # plt.ylabel('mm $\mathregular{day^{-1}}$')
-        # ax = plt.gca()
-        # ax.spines['right'].set_color('none')
-        # ax.spines['top'].set_color('none')
-        # plt.tight_layout() # avoid overlap
-        # plt.savefig(figpath + 'precip_extremes.eps', bbox_inches='tight')
-        # plt.close()
 
 
 def plot_contour(T, q, y, z, p, avg_hem=False):
@@ -700,14 +600,12 @@ def plot_contour(T, q, y, z, p, avg_hem=False):
     cax1 = ax1.contourf(y, p, T)
     ax1.set_ylim(np.amax(p), np.amin(p))
     ax1.set_ylabel('Pressure (hPa)')
-    # ax1.xaxis.set_ticks([-60,-30,0,30,60])
     fig.colorbar(cax1, ax=ax1)
     cax2 = ax2.contourf(y, p, q)
     ax2.set_ylim(np.amax(p), np.amin(p))
     ax2.set_ylabel('Pressure (hPa)')
     fig.colorbar(cax2, ax=ax2)
     ax2.set_xlabel('y (10^3 km)')
-    # ax2.xaxis.set_ticks([-60,-30,0,30,60])
     return fig, ax1, ax2
 
 
@@ -720,18 +618,12 @@ def plot_contour_cc(T, q, y, z, p, avg_hem=False):
 
     cax1 = ax1.contourf(y, p, T, levels, extend='min')
     ax1.set_ylim(np.amax(p), np.amin(p))
-    # cbar = f.colorbar(cax1, ax=ax1, ticks = np.arange(0.2,1.1,0.1))
-    # cbar.ax.set_yticklabels(['0.2','','0.4','','0.6','','0.8','','1.0'])
     ax1.set_ylabel('Pressure (hPa)')
     ax1.set_xlabel('y (10^3 km)')
-    # ax1.xaxis.set_ticks([-60,-30,0,30,60])
 
     cax2 = ax2.contourf(y, p, q, levels, extend='min')
     ax2.set_ylim(np.amax(p), np.amin(p))
-    # cbar = f.colorbar(cax2, ax=ax2, ticks = np.arange(0.2,1.1,0.1))
-    # cbar.ax.set_yticklabels(['0.2','','0.4','','0.6','','0.8','','1.0'])
     ax2.set_xlabel('y (10^3 km)')
-    # ax2.xaxis.set_ticks([-60,-30,0,30,60])
 
     fig.subplots_adjust(right=0.9)
     cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
@@ -740,30 +632,6 @@ def plot_contour_cc(T, q, y, z, p, avg_hem=False):
     return fig, ax1, ax2
 
 
-#
-# def plot_contour_Rsq_generalized(var , y, z, p, avg_hem=False):
-#     if avg_hem:
-#         var, _ = ml_load.avg_hem(var, y, 1)
-#         q, y = ml_load.avg_hem(q, y, 1)
-#     fig, (ax1) = plt.subplots(1, 1, figsize=(6,2))
-#     levels = np.linspace(0.2,1,9)
-#
-#     cax1 = ax1.contourf(y, p, var, levels, extend='min')
-#     ax1.set_ylim(np.amax(p), np.amin(p))
-#     #cbar = f.colorbar(cax1, ax=ax1, ticks = np.arange(0.2,1.1,0.1))
-#     #cbar.ax.set_yticklabels(['0.2','','0.4','','0.6','','0.8','','1.0'])
-#     ax1.set_ylabel('Pressure (hPa)')
-#     ax1.set_xlabel('y (10^3 km)')
-#     #ax1.xaxis.set_ticks([-60,-30,0,30,60])
-#
-#     ax1.set_xlabel('y (10^3 km)')
-#     #ax2.xaxis.set_ticks([-60,-30,0,30,60])
-#
-#     fig.subplots_adjust(right=0.9)
-#     cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
-#     fig.colorbar(cax1, cax=cbar_ax, ticks=np.arange(0.2,1.1,0.1))
-#     return fig, ax1
-#
 
 def plot_contour_Rsq(T, q, y, z, p, avg_hem=False):
     if avg_hem:
@@ -774,18 +642,12 @@ def plot_contour_Rsq(T, q, y, z, p, avg_hem=False):
 
     cax1 = ax1.contourf(y, p, T, levels, extend='min')
     ax1.set_ylim(np.amax(p), np.amin(p))
-    # cbar = f.colorbar(cax1, ax=ax1, ticks = np.arange(0.2,1.1,0.1))
-    # cbar.ax.set_yticklabels(['0.2','','0.4','','0.6','','0.8','','1.0'])
     ax1.set_ylabel('Pressure (hPa)')
     ax1.set_xlabel('y (10^3 km)')
-    # ax1.xaxis.set_ticks([-60,-30,0,30,60])
 
     cax2 = ax2.contourf(y, p, q, levels, extend='min')
     ax2.set_ylim(np.amax(p), np.amin(p))
-    # cbar = f.colorbar(cax2, ax=ax2, ticks = np.arange(0.2,1.1,0.1))
-    # cbar.ax.set_yticklabels(['0.2','','0.4','','0.6','','0.8','','1.0'])
     ax2.set_xlabel('y (10^3 km)')
-    # ax2.xaxis.set_ticks([-60,-30,0,30,60])
 
     fig.subplots_adjust(right=0.9)
     cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
@@ -827,16 +689,6 @@ def plot_means_stds_generalized(y3_true, y3_pred, p, figpath, output_vert_vars, 
     plt.close()
 
 
-# Plot means and standard deviations
-# def plot_means_stds(y3_true, y3_pred, p, figpath):
-#     fig = plt.figure(figsize=(6.0,4.5))
-#     do_mean_or_std_y('mean', 'T', y3_true*per_day, y3_pred*per_day, p, 1)
-#     do_mean_or_std_y('mean', 'q', y3_true*per_day*kg_to_g, y3_pred*per_day*kg_to_g, p, 2)
-#     do_mean_or_std_y('std', 'T', y3_true*per_day, y3_pred*per_day, p, 3)
-#     do_mean_or_std_y('std', 'q', y3_true*per_day*kg_to_g, y3_pred*per_day*kg_to_g, p, 4)
-#     plt.tight_layout() # avoid overlap
-#     fig.savefig(figpath + 'means_stds.eps', bbox_inches='tight')
-#     plt.close()
 
 
 # Plot correlation coefficient, explained variance, and rmse
@@ -854,8 +706,6 @@ def plot_error_stats(y3_true, y3_pred, p, figpath, output_vert_vars, output_vert
     for key, dim in zip(output_vert_vars, output_vert_dim):
         if dim > 1:
             plot_expl_var_generalized(true_out_dict[key], pred_out_dict[key], key, p[0:dim])
-    # plot_expl_var(y3_true, y3_pred, 'q', p)
-    # plt.subplot(len(output_vert_vars), 2, 3)
     fig_ind = 2
     for key, dim in zip(output_vert_vars, output_vert_dim):
         fig_ind = fig_ind + 1
@@ -869,8 +719,6 @@ def plot_error_stats(y3_true, y3_pred, p, figpath, output_vert_vars, output_vert
             factor1 = per_day
         if dim > 1:
             plot_rmse_generalized(true_out_dict[key] * factor1, pred_out_dict[key] * factor1, key, p[0:dim])
-    # plt.subplot(2, 2, 4)
-    # plot_rmse(y3_true*per_day*kg_to_g, y3_pred*per_day*kg_to_g, 'q', p)
     plt.tight_layout()  # avoid overlap
     fig.savefig(figpath + 'error_stats.eps', bbox_inches='tight')
     plt.close()
@@ -937,29 +785,6 @@ def plot_scatter(f, otrue, opred, z, p, rho, figpath, output_vert_vars, output_v
     text_file.write('Mean bias for P: %e \n' % Pbias)
     text_file.close()
 
-    # Plot scatters at each level
-    # First create new folder
-    # if not os.path.exists(figpath + '/scatters/'):
-    #     os.makedirs(figpath + '/scatters/')
-    # for i in range(np.size(z)):
-    #     fig, ax = plt.subplots(1, 2)
-    #     Ttrue = unpack_o(otrue, 'T')[:, i]
-    #     Tpred = unpack_o(opred, 'T')[:, i]
-    #     qtrue = unpack_o(otrue, 'q')[:, i]
-    #     qpred = unpack_o(opred, 'q')[:, i]
-    #     p_str = r'p = {:.2f}'.format(p[i])
-    #     _plot_scatter(ax[0], Ttrue * per_day, Tpred * per_day, titstr='T [K/day] at ' + p_str)
-    #     _plot_scatter(ax[1], qtrue * per_day * kg_to_g, qpred * per_day * kg_to_g, titstr='q [g/kg/day] at ' + p_str)
-    #     Teq0 = sum(Ttrue == 0.0) / len(Ttrue) * 100.
-    #     qeq0 = sum(qtrue == 0.0) / len(qtrue) * 100.
-    #     ax[0].text(0.01, 0.95, 'True T=0 {:.1f}% of time'.format(Teq0),
-    #                transform=ax[0].transAxes)
-    #     ax[1].text(0.01, 0.95, 'True q=0 {:.1f}% of time'.format(qeq0),
-    #                transform=ax[1].transAxes)
-    #     plt.tight_layout()  # avoid overlap
-    #     fig.savefig(figpath + '/scatters/Tq_scatter_p{:.0f}.png'
-    #                 .format(p[i]), bbox_inches='tight', dpi=600)
-    #     plt.close()
 
 
 def _plot_scatter(ax, true, pred, titstr=None):
@@ -1005,7 +830,6 @@ def do_mean_or_std_y_generalized(method, vari, true, pred, p, ind, plot_col, fig
     methods = {'mean': np.mean, 'std': np.std}
     methods_ti = {'mean': 'Mean', 'std': 'Standard Deviation'}
     plt.subplot(plot_col, 2, ind)
-    # m = lambda y: methods[method](vari, axis=0).T
     plt.plot(methods[method](true, axis=0).T, p, label='true')
     plt.plot(methods[method](pred, axis=0).T, p, label='pred')
 
@@ -1028,23 +852,6 @@ def do_mean_or_std_y_generalized(method, vari, true, pred, p, ind, plot_col, fig
     plt.legend(frameon=False)
 
 
-# def do_mean_or_std_y(method, vari, true, pred, p, ind):
-#     methods = {'mean': np.mean, 'std': np.std}
-#     methods_ti = {'mean': 'Mean', 'std': 'Standard Deviation'}
-#     plt.subplot(2, 2, ind)
-#     m = lambda y: methods[method](unpack_o(y, vari), axis=0).T
-#     plt.plot(m(true), p, label='true')
-#     plt.plot(m(pred), p, label='pred')
-#     plt.plot(0*p, p, linewidth=0.3)
-#     plt.ylim(np.amax(p), np.amin(p))
-#     plt.ylabel('Pressure (hPa)')
-#     out_str_dict = {'T': 'K/day', 'q': 'g/kg/day'}
-#     if ind > 2:
-#         plt.xlabel(out_str_dict[vari])
-#     plt.title(r'$\Delta$ ' + vari + " " + methods_ti[method])
-#     plt.legend()
-#     plt.legend(frameon=False)
-
 
 def plot_pearsonr_generalized(o_true, o_pred, vari, p, label=None):
     r = np.empty(o_true.shape[1])
@@ -1058,16 +865,6 @@ def plot_pearsonr_generalized(o_true, o_pred, vari, p, label=None):
     plt.title('Correlation Coefficient')
 
 
-# def plot_pearsonr(o_true, o_pred, vari, p, label=None):
-#     r = np.empty(o_true.shape[1])
-#     prob = np.empty(o_true.shape[1])
-#     for i in range(o_true.shape[1]):
-#         r[i], prob[i] = scipy.stats.pearsonr(o_true[:, i], o_pred[:, i])
-#     plt.plot(unpack_o(r, vari, axis=0), p, label=label)
-#     plt.ylim([np.amax(p), np.amin(p)])
-#     #plt.xlim(0, 1)
-#     plt.ylabel('Pressure (hPa)')
-#     plt.title('Correlation Coefficient')
 
 
 def plot_rmse_generalized(o_true, o_pred, key, p, label=None):
@@ -1077,22 +874,10 @@ def plot_rmse_generalized(o_true, o_pred, key, p, label=None):
     plt.ylim([np.amax(p), np.amin(p)])
     plt.xlim(xmin=0)
     plt.ylabel('Pressure (hPa)')
-    # out_str_dict = {'T': 'K$^2$/day$^2$', 'q': 'g$^2$/kg$^2$/day$^2$'}
     plt.xlabel(key)
     plt.title('Root Mean Squared Error' + key)
 
 
-#
-# def plot_rmse(o_true, o_pred, vari, p, label=None):
-#     rmse = np.sqrt(metrics.mean_squared_error(o_true, o_pred,
-#                                               multioutput='raw_values'))
-#     plt.plot(unpack_o(rmse, vari, axis=0), p, label=label)
-#     plt.ylim([np.amax(p), np.amin(p)])
-#     plt.xlim(xmin=0)
-#     plt.ylabel('Pressure (hPa)')
-#     out_str_dict = {'T': 'K$^2$/day$^2$', 'q': 'g$^2$/kg$^2$/day$^2$'}
-#     plt.xlabel(out_str_dict[vari])
-#     plt.title('Root Mean Squared Error')
 
 
 def plot_expl_var_generalized(o_true, o_pred, vari, p, label=None):
@@ -1104,15 +889,6 @@ def plot_expl_var_generalized(o_true, o_pred, vari, p, label=None):
     plt.ylabel('Pressure (hPa)')
     plt.title('Explained Variance Regression Score')
 
-
-# def plot_expl_var(o_true, o_pred, vari, p, label=None):
-#     expl_var = metrics.explained_variance_score(o_true, o_pred,
-#                                                 multioutput='raw_values')
-#     plt.plot(unpack_o(expl_var, vari, axis=0), p, label=label)
-#     plt.ylim([np.amax(p), np.amin(p)])
-#     plt.xlim(0,1)
-#     plt.ylabel('Pressure (hPa)')
-#     plt.title('Explained Variance Regression Score')
 
 
 def _plot_energy_conservation(f_dict, o_dict, z, p, rho, output_vert_vars, figpath, label=None):
@@ -1259,7 +1035,6 @@ def plot_sample_profile(f, o_true, o_pred, p, filename=None, pflag=False, wind_i
     q = unpack_f_extended(f, 'q', axis=0, wind_input=wind_input)
     # Plot input temperature profile
     ax1.plot(T, p, label=r'$T$')
-    # ax1.set_xlim(270, 370)
     ax3.set_ylim(np.amax(p), np.amin(p))
     ax1.set_title('Input Profiles')
     ax1.grid(True)

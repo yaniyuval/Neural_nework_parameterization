@@ -1,5 +1,4 @@
 import numpy as np
-# import sknn_jgd.mlp #uncomment if I want to run NN
 import time
 from sklearn.ensemble import RandomForestRegressor
 from src.ml_io import write_netcdf_rf
@@ -10,14 +9,12 @@ import src.ml_plot_nn as ml_plot_nn
 import os
 import math
 
-# For NN pytorch training:
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.utils.data as Data
 import torchvision
 from torch import nn, optim
-#from time import time
 from netCDF4 import Dataset
 import netCDF4
 from sklearn.metrics import r2_score
@@ -55,7 +52,6 @@ def train_wrapper(f_ppi, o_ppi, training_expt, input_vert_dim, output_vert_dim,
     Returns:
         str: String id of trained NN
     """
-    # Load data (note LoadData seeds the random number generator)
 
     if not only_plot:
         datadir, trainfile, testfile, pp_str = ml_load.GetDataPath_nn(training_expt, wind_input=do_wind_input,
@@ -80,7 +76,7 @@ def train_wrapper(f_ppi, o_ppi, training_expt, input_vert_dim, output_vert_dim,
 
         # Either build a random forest or build a neural netowrk
         if do_nn:
-            est, est_str = BuildNN(pp_str, n_in, n_out, n_layers,dropoff, batch_norm) # Should include in
+            est, est_str = BuildNN(pp_str, n_in, n_out, n_layers,dropoff, batch_norm) 
 
         if output_extreme_flag:
             print('Removing extremes - the plots are not done on the correct data set I think - to take care if choosing to remove extremes... ')
@@ -100,23 +96,7 @@ def train_wrapper(f_ppi, o_ppi, training_expt, input_vert_dim, output_vert_dim,
             end1 = time.time()
             print("The training time in seconds is:")
             print(end1 - start1)
-            #exit()
             save_nn(est, est_str, n_layers, o_pp, f_pp, f_ppi, o_ppi, y, z, p, rho, batch_norm=batch_norm)
-        # else:
-        #     if do_train:
-        #         est, est_errors, train_score, test_score = train_est(est, est_str, f_scl, o_scl, tf_scl, to_scl, do_nn)
-        #
-        #         est_str = est_str + 'te' + str(int(str(test_score)[2:4])) + '_tr' + str(int(str(train_score)[2:4]))
-        #     if flag_dict['exclusion_flag']:
-        #         est_str = est_str + str(flag_dict['ind1_exc']) + str(flag_dict['ind2_exc'])
-        #   # Save the estimator to access it later
-        #     save_est(est, est_str, est_errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho, train_score, test_score,is_cheyenne,exclusion_flag=flag_dict['exclusion_flag'],ind1_exc=flag_dict['ind1_exc'],ind2_exc=flag_dict['ind2_exc'])
-        # # Write a netcdf file for the gcm
-        # if do_nn:
-        #     write_netcdf_nn(est_str, trainfile, rain_only, no_cos, use_rh,is_cheyenne)
-        # else:
-        #     write_netcdf_rf(est_str, trainfile, output_vert_vars, output_vert_dim, rain_only, no_cos, use_rh,scale_level,
-        #                      rewight_outputs=rewight_outputs,weight_list=weight_list,is_cheyenne=is_cheyenne)#,exclusion_flag=flag_dict['exclusion_flag'],ind1_exc=flag_dict['ind1_exc'],ind2_exc=flag_dict['ind2_exc'])
 
 
 
@@ -125,10 +105,6 @@ def train_wrapper(f_ppi, o_ppi, training_expt, input_vert_dim, output_vert_dim,
         trainfile = '/glade/scratch/janniy/mldata_tmp/training_data/qobsTTFFFFFTF26TTTFTF48TFFFFFTFTFFF40FFTFTTF4848_training_x_no_subsampling.pkl'
         testfile = '/glade/scratch/janniy/mldata_tmp/training_data/qobsTTFFFFFTF26TTTFTF48TFFFFFTFTFFF40FFTFTTF4848_testing_x_no_subsampling.pkl'
         est_str = 'qobsTTFFFFFTF26TTTFTF48TFFTFTFFF40FFTFTTF4848FF_X01_F-NoSc_O-Stan_Ntr5000000_Nte972360_F_Tin_qin_qpin_latin_O_Tout_qout_qpout_RF_NTr10_MinS20max_d27_maxzinf_nocos_te50_tr54'
-        #Momentum
-        trainfile = '/glade/scratch/janniy/mldata_tmp/training_data/qobsFFTTFFTFF0TFTFTF48FFFFFFFFFFFF1648FFFFTTF00_training_x_no_subsampling.pkl'
-        testfile = '/glade/scratch/janniy/mldata_tmp/training_data/qobsFFTTFFTFF0TFTFTF48FFFFFFFFFFFF1648FFFFTTF00_testing_x_no_subsampling.pkl'
-        est_str = 'qobsFFTTFFTFF0FFTFTF48FFFFFFFFF1648FFFFTTF00FF_X01_F-NoSc_O-Stan_Ntr5000000_Nte607770_F_Tin_qin_qpin_uin_vin_minusSH_win_surf_wind_O_u_corr_RF_NTr10_MinS20max_d27_maxzinf_nocos_te13_tr19'
 
     if only_plot:
         figpath = '/glade/scratch/janniy/figs_tmp_xy' + est_str + '/'
@@ -180,14 +156,9 @@ def PreprocessData_tr_ts(f_ppi, f, test_f, o_ppi, o, test_o, pp_str, n_trn_exs, 
     o_pp_dict = ml_load.init_pp_generalized(o_ppi,o_dict,output_vert_vars,scale_per_column=False)
     if rewight_outputs:
         for ind, name in enumerate(output_vert_vars,start=0):
-        #     list_res = [1.0,2.25,4.0,4.0,1.0]
             o_pp_dict[name].var_ = o_pp_dict[name].var_/(weight_list[ind]**2)
-            print('rescaling output!!!')
 
-    print('Note - for outputs - no scale per column')
-    # rewight_outputs =True
-    # print('RESCALING OUT111!')
-    o_dict = ml_load.transform_data_generalized(o_ppi, o_pp_dict, o_dict, output_vert_vars, z,scale_per_column=False,rewight_outputs=rewight_outputs,weight_list=weight_list) #For random forest this is not necessary
+    o_dict = ml_load.transform_data_generalized(o_ppi, o_pp_dict, o_dict, output_vert_vars, z,scale_per_column=False,rewight_outputs=rewight_outputs,weight_list=weight_list) 
     o = ml_load.pack_list(o_dict, output_vert_vars)
 
     #Preprocessing test output
@@ -227,13 +198,6 @@ def PreprocessData(f_ppi, f, o_ppi, o, pp_str, n_trn_exs, z):
     pp_str = pp_str + 'Ntrnex' + str(n_trn_exs) + '_'
     return f_pp, f, o_pp, o, pp_str
 
-# def CatchRegularization(weight_decay):
-#     """scikit-neuralnetwork seems to have a bug if regularization is set to zero"""
-#     if weight_decay > 0.0:
-#         regularize = 'L2'
-#     else:
-#         regularize = None
-#     return regularize
 
 def UpdateName(no_cos, use_rh, rain_only, est_str):
     if no_cos:
@@ -254,9 +218,6 @@ def save_est(est, est_str, est_errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho, t
 
     if not os.path.exists(base_dir + 'mldata_tmp/regressors/'):
         os.makedirs(base_dir + 'mldata_tmp/regressors/')
-    # if exclusion_flag:
-    #     pickle.dump([est, est_str, est_errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho], open(base_dir + 'mldata_tmp/regressors/' + est_str+ str(ind1_exc)+ str(ind2_exc) + '.pkl', 'wb'))
-    # else:
     pickle.dump([est, est_str, est_errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho],
                 open(base_dir + 'mldata_tmp/regressors/' + est_str + '.pkl', 'wb'))
 
@@ -343,20 +304,17 @@ def train_est(est, est_str, f_scl, o_scl, tf_scl, to_scl, do_nn):
     # Return the fitted models and the scores
     return est, errors, train_score, test_score
 
-# Yani adding for local predictions
 def train_est_local(est, est_str, f_scl, o_scl, tf_scl, to_scl, input_vert_vars, output_vert_vars, train_lev_num = 5):
     """Train estimator locally - using only limited number of levels"""
     f_scl_local, o_scl_local = convert_local(f_scl, o_scl,train_lev_num, input_vert_vars, output_vert_vars) # Converting to local data (each sample has the number of levels and a single output.
     tf_scl_local, to_scl_local = convert_local(tf_scl, to_scl, train_lev_num, input_vert_vars, output_vert_vars)
 
 
-#Yani adding for nn training
 def train_nn(net, est_str, f_scl, o_scl, tf_scl,to_scl, output_vert_dim, output_vert_vars,epochs =7, min_lr = 2e-4, max_lr = 2e-3, step_size_up=4000,batch_size = 1024):
 
 
 
     y_train_small_py = torch.from_numpy(o_scl.reshape(-1, o_scl.shape[1])).float()
-    # y_train_val_py = torch.from_numpy(y_train_val.reshape(-1, y_train_small.shape[1])).float()
 
     X_norm_py = torch.from_numpy(f_scl.reshape(-1, f_scl.shape[1])).float()
     X_train_val_norm_py = torch.from_numpy(tf_scl.reshape(-1, tf_scl.shape[1])).float()
@@ -373,8 +331,8 @@ def train_nn(net, est_str, f_scl, o_scl, tf_scl,to_scl, output_vert_dim, output_
     optimizer = optim.Adam(net.parameters(), lr=1e-7)
     loss_func = torch.nn.MSELoss()
     scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr=min_lr, max_lr= max_lr, step_size_up=step_size_up, cycle_momentum=False)
-    torch.set_num_threads(10)  # This is related to multiple processors but not what I really need.
-    for epoch in range(epochs):  # Can use only 4 maybe
+    torch.set_num_threads(10)  
+    for epoch in range(epochs):  
         train_model_cyclic(net, loss_func, loader, optimizer, scheduler)
         test_model(net, X_train_val_norm_py, to_scl, output_vert_dim, output_vert_vars)
 
@@ -389,7 +347,6 @@ def train_nn(net, est_str, f_scl, o_scl, tf_scl,to_scl, output_vert_dim, output_
     test_score = test_model(net, X_train_val_norm_py, to_scl, output_vert_dim, output_vert_vars)
     train_score = test_model(net, X_norm_py[0:500000,:], o_scl[0:500000,:], output_vert_dim, output_vert_vars)
 
-    # train_score = test_model(net, X_train_val_norm_py, y_train_val)
     est_str = est_str +  '_te' + str(int(str(test_score)[2:4])) + '_tr' + str(int(str(train_score)[2:4]))
     PATH = '/glade/u/home/janniy/convection_parametrization/paul_codes/ML-convection_sam_flex_io/NN_saved/' + est_str +  'stage2.pth'
     torch.save(net.state_dict(), PATH)
@@ -433,7 +390,6 @@ def test_model_per_var(net,X_train_val_norm_py,y_train_val, output_vert_dim):
 
 
 def train_model_cyclic(net,criterion,trainloader,optimizer,scheduler):
-#     amp.initialize(model, optimizer, opt_level)
     net.train()
     test_loss = 0
     for step, (batch_x, batch_y) in enumerate(trainloader):  # for each training step
@@ -467,25 +423,20 @@ def save_nn(net, est_str, n_layers, o_pp, f_pp, f_ppi, o_ppi, y, z, p, rho, batc
     X_std = np.zeros(in_dim)
     ind_now = 0
     print('check that I am iterating correctly over variables')
-    for key, value in f_pp.items():  # Iterate over the different features mean and std. Note that I need to verify that the order of items is what I think it is....
+    for key, value in f_pp.items():  
         ind_tmp = ind_now + value.mean_.shape[0]
         X_mean[ind_now:ind_tmp] = value.mean_
-        X_std[ind_now:ind_tmp] = np.sqrt(value.var_)  # To get the std I am taking the sqrt of variance
+        X_std[ind_now:ind_tmp] = np.sqrt(value.var_)  
         ind_now = ind_tmp
 
-    # if n_layers == 2:
-    #     out_dim = net2.linear2.weight.T.shape[1]
-    # elif  n_layers == 5:
-    #     out_dim = net2.linear5.weight.T.shape[1]
 
     Y_mean = np.zeros(len(o_pp))
     Y_std = np.zeros(len(o_pp))
     ind_now = 0
     print('check that I am iterating correctly over outputs')
     for key, value in o_pp.items():  # Iterate over the different features mean and std.
-        # ind_tmp = ind_now + value.mean_.shape[0]
         Y_mean[ind_now] = value.mean_
-        Y_std[ind_now] = np.sqrt(value.var_)  # To get the std I am taking the sqrt of variance
+        Y_std[ind_now] = np.sqrt(value.var_)  
         ind_now = ind_now +1
 
     if n_layers == 2:
@@ -601,8 +552,6 @@ def save_nn(net, est_str, n_layers, o_pp, f_pp, f_ppi, o_ppi, y, z, p, rho, batc
         nc_fscale_stnd = ncfile.createVariable('fscale_stnd',
                                                np.dtype('float32').char, ('N_in'))
 
-        #     nc_w1[:] = net2.linear1.weight.data.numpy().T
-        #     nc_w2[:] = net2.linear2.weight.data.numpy().T
         nc_w1[:] = net2.linear1.weight.data.numpy()
         nc_w2[:] = net2.linear2.weight.data.numpy()
         nc_w3[:] = net2.linear3.weight.data.numpy()
@@ -703,8 +652,6 @@ def save_nn(net, est_str, n_layers, o_pp, f_pp, f_ppi, o_ppi, y, z, p, rho, batc
         nc_fscale_stnd = ncfile.createVariable('fscale_stnd',
                                                np.dtype('float32').char, ('N_in'))
 
-        #     nc_w1[:] = net2.linear1.weight.data.numpy().T
-        #     nc_w2[:] = net2.linear2.weight.data.numpy().T
         nc_w1[:] = net2.linear1.weight.data.numpy()
         nc_w2[:] = net2.linear2.weight.data.numpy()
         nc_w3[:] = net2.linear3.weight.data.numpy()
@@ -824,8 +771,6 @@ def save_nn(net, est_str, n_layers, o_pp, f_pp, f_ppi, o_ppi, y, z, p, rho, batc
         nc_fscale_stnd = ncfile.createVariable('fscale_stnd',
                                                np.dtype('float32').char, ('N_in'))
 
-        #     nc_w1[:] = net2.linear1.weight.data.numpy().T
-        #     nc_w2[:] = net2.linear2.weight.data.numpy().T
         nc_w1[:] = net2.linear1.weight.data.numpy()
         nc_w2[:] = net2.linear2.weight.data.numpy()
         nc_w3[:] = net2.linear3.weight.data.numpy()
@@ -921,8 +866,6 @@ def save_nn(net, est_str, n_layers, o_pp, f_pp, f_ppi, o_ppi, y, z, p, rho, batc
         nc_fscale_stnd = ncfile.createVariable('fscale_stnd',
                                                np.dtype('float32').char, ('N_in'))
 
-        #     nc_w1[:] = net2.linear1.weight.data.numpy().T
-        #     nc_w2[:] = net2.linear2.weight.data.numpy().T
         nc_w1[:] = net2.linear1.weight.data.numpy()
         nc_w2[:] = net2.linear2.weight.data.numpy()
         nc_w3[:] = net2.linear3.weight.data.numpy()
@@ -955,7 +898,7 @@ def save_nn(net, est_str, n_layers, o_pp, f_pp, f_ppi, o_ppi, y, z, p, rho, batc
 
     if not os.path.exists(base_dir + 'mldata_tmp/regressors/'):
         os.makedirs(base_dir + 'mldata_tmp/regressors/')
-    est_errors = 0 # This is dummy not to change how we dump.
+    est_errors = 0 
     pickle.dump([net, est_str, est_errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho],
                 open(base_dir + 'mldata_tmp/regressors/' + est_str + '.pkl', 'wb'))
 
@@ -977,16 +920,6 @@ def remove_extremes(f_scl, tf_scl, o_scl,to_scl, drop_criterion_std = 60):
     print('size of indices Y train', indices_to_drop_y.shape)
     print('size of indices Y val', indices_to_drop_y_val.shape)
 
-    # indices_to_drop_X = np.unique(np.nonzero(f_scl[:, :] > drop_criterion_std)[0])
-    # print('size of indices X train', indices_to_drop_X.shape)
-    # indices_to_drop_X_val = np.unique(np.nonzero(tf_scl[:, :] > drop_criterion_std)[0])
-    # print('size of indices X val', indices_to_drop_X_val.shape)
-    #
-    # tot_train_ind_drop = np.concatenate((indices_to_drop_X, indices_to_drop_y), axis=0)
-    # tot_train_ind_drop = np.unique(tot_train_ind_drop)
-    #
-    # tot_val_ind_drop = np.concatenate((indices_to_drop_X_val, indices_to_drop_y_val), axis=0)
-    # tot_val_ind_drop = np.unique(tot_val_ind_drop)
 
 
     # For train:
@@ -1157,41 +1090,4 @@ class Net_ANN_6_no_BN(nn.Module):
         x = self.linear6(x)
         return x
 
-class Net_CNN_3_channels(nn.Module):
-    def __init__(self,n_in, n_out):
-        super(Net_CNN_3_channels, self).__init__()
-        self.conv1 = nn.Sequential(
-            nn.Conv1d(in_channels=3, out_channels=10, kernel_size=5, padding=2),
-            nn.BatchNorm1d(10),
-            nn.ReLU(),
-            nn.MaxPool1d(2)
-        )
-        self.conv2 = nn.Sequential(
-            nn.Conv1d(in_channels=10, out_channels=20, kernel_size=5, padding=2),
-            nn.BatchNorm1d(20),
-            nn.ReLU(),
-            #             nn.MaxPool1d(2)
-        )
-
-        self.linear1 = nn.Linear(20 * (n_in-1)/3/2, 256)
-        self.linear2 = nn.Linear(256, n_out)
-        self.dense0_bn = nn.BatchNorm1d(20 * (n_in-1)/3/2)
-        self.dense1_bn = nn.BatchNorm1d(256)
-        self.lin_drop = nn.Dropout(0.02)  # regularization method to prevent overfitting.
-        if (n_in-1)/3/2% 1 != 0:
-            raise Exception('The number of inputs after convolutional layers is not an integer and not difined well {}'.format((n_in-1)/3/2))
-
-    def forward(self, x):
-        x1 = torch.reshape(x[:, :], [-1, 3, (n_in-1)/3])
-        x1 = self.conv1(x1)
-        x1 = self.conv2(x1)
-        x4 = x[:,-1].unsqueeze(1)
-        x1 = x1.view(x1.size(0), -1)
-        x = torch.cat((x1, x4), dim=1)
-                # print('I think I should have bn here as well')
-        x = self.dense0_bn(x)
-        x = self.dense1_bn(F.relu(self.linear1(x)))
-        x = self.lin_drop(x)
-        x = self.linear2(x)
-        return x
 

@@ -79,16 +79,12 @@ def LoadData(filename, max_z, input_vert_vars, output_vert_vars, all_ys=True, in
     p = p[ind_z]
     rho = rho[ind_z]
 
-    # if wind_input:
-    #     varis = ['Tin', 'qin','uin','vin','win', 'Tout', 'qout']
-    # else:
-    #     varis = ['Tin', 'qin', 'Tout', 'qout']
 
     rank_of_vars = len(v[var].shape)
     # Reshape the arrays
     for var in varis:
         # Change shape of data to be n_samp n_z
-        if (v[var].shape[0] > 1 and len(v[var].shape) == 3 and v[var].shape[0]!=360 and v[var].shape[0]!=45 and v[var].shape[0]!=90): #Yani: check that the variable has all levels - otherwize it assumes that it has no z dimensions.
+        if (v[var].shape[0] > 1 and len(v[var].shape) == 3 and v[var].shape[0]!=360 and v[var].shape[0]!=45 and v[var].shape[0]!=90): 
             if all_ys:
                 if no_cos:
                     v[var] = reshape_all_ys(v[var], ind_z[0:v[var].shape[0]])
@@ -99,16 +95,16 @@ def LoadData(filename, max_z, input_vert_vars, output_vert_vars, all_ys=True, in
                     v[var] = reshape_one_y(v[var], ind_z[0:v[var].shape[0]], ind_y)
                 else:
                     raise TypeError('Need to set an index value for ind_y')
-        elif len(v[var].shape) == 2: ##HERE YANI TO FIX!
+        elif len(v[var].shape) == 2: 
             if all_ys:
                 v[var] = v[var].swapaxes(0, 1)
-                v[var] = v[var].reshape(-1,1) #Yani assuming hare that this has 1 z level - I THINK THAT THIS COULD BE A MISTAKE!
+                v[var] = v[var].reshape(-1,1) 
             else:
                 if ind_y is not None:
                     v[var] = reshape_one_y(v[var], ind_z,ind_y)
                 else:
                     raise TypeError('Need to set an index value for ind_y')
-        elif (v[var].shape[0] > 1 and len(v[var].shape) == 4): #Yani: check that the variable has all levels - otherwize it assumes that it has no z dimensions.
+        elif (v[var].shape[0] > 1 and len(v[var].shape) == 4): 
             if all_ys:
                 if no_cos:
                     v[var] = reshape_all_ys_4d(v[var], ind_z[0:v[var].shape[0]])
@@ -120,7 +116,7 @@ def LoadData(filename, max_z, input_vert_vars, output_vert_vars, all_ys=True, in
                 else:
                     raise TypeError('Need to set an index value for ind_y 4')
 
-        elif ((v[var].shape[0] == 360 or v[var].shape[0] == 45 or v[var].shape[0] == 90) and len(v[var].shape) == 3):  # only 1 z level but with x dim input
+        elif ((v[var].shape[0] == 360 or v[var].shape[0] == 45 or v[var].shape[0] == 90) and len(v[var].shape) == 3):  
             if all_ys:
                 if no_cos:
                     v[var] = reshape_all_ys_4d(v[var], ind_z[0:1])
@@ -134,7 +130,7 @@ def LoadData(filename, max_z, input_vert_vars, output_vert_vars, all_ys=True, in
 
 
         else:
-            raise TypeError('There is a variable that has larger dimentions than 2 but it is not treated properly') #Yani
+            raise TypeError('There is a variable that has larger dimentions than 2 but it is not treated properly') 
 
     # Use relative humidity as a feature
     if use_rh: 
@@ -147,7 +143,7 @@ def LoadData(filename, max_z, input_vert_vars, output_vert_vars, all_ys=True, in
     np.random.seed(123) # seed random number generator so always get same set of data when call this function (e.g., if call again to make plots)
     m = v[input_vert_vars[0]].shape[0]
 
-    if rank_of_vars == 4: #This is the case that I want the structure of x-y plane - so I do not want to mix
+    if rank_of_vars == 4: 
         print('We have 4D variables - xy structure')
     else:
         randind = np.random.permutation(m)
@@ -158,12 +154,6 @@ def LoadData(filename, max_z, input_vert_vars, output_vert_vars, all_ys=True, in
 
     f = pack_list(v, input_vert_vars)
     o = pack_list(v, output_vert_vars)
-    # if wind_input:
-    #     f = pack_f_extended(v['Tin'], v['qin'], v['uin'], v['vin'], v['win'])
-    # else:
-    #     f = pack_f(v['Tin'], v['qin'])
-    #
-    # o = pack_o(v['Tout'], v['qout'])
 
     if rain_only:
        raise ValueError('rain_only not implemented')
@@ -240,10 +230,6 @@ def reshape_one_y(z, ind_z, ind_y):
         z = z[ind_z, ind_y,:,  :]
         z = np.reshape(z, (z.shape[0], -1))
         z = z.swapaxes(0, 1)
-        # raise TypeError('number of dimensions is unexpected - Not ready to deal with 4D')
-        # z = z[ind_z, ind_y, :]
-        # z = np.reshape(z, (z.shape[0], 1))
-        # z = z.swapaxes(0, 1)
     else:
         raise TypeError('number of dimensions is unexpected')
     return z
@@ -299,8 +285,6 @@ def pack_o(d1, d2, axis=1):
     """Combines T & q profiles"""
     return np.concatenate((d1, d2), axis=axis)
 
-# def pack_o_to_dict
-#     '''packs outputs to dictionry'''
 
 def choose_output_from_dic():
     """Gets an output from dictionary of outputs"""
@@ -407,10 +391,10 @@ def transform_data_generalized(ppi, f_pp_dict, f_dict, input_vert_vars, z,scale_
             trans_data_dic[name]= f_dict[name]*f_pp_dict[name][index]*np.exp(-z/7000.0)
     elif ppi['name'] == 'NoScaler':
         trans_data_dic = f_dict
-    elif ppi['name'] == 'F_stscl_add': # For the case I wanted to use standard scalar but add constant for the std (for levels that are close to zero)
+    elif ppi['name'] == 'F_stscl_add': 
         trans_data_dic = dict()
         for name in input_vert_vars:
-            if scale_per_column:  # Should scle each column seperately - to verify!
+            if scale_per_column:  
                 trans_data_dic[name] = (f_dict[name] - f_pp_dict[name].mean_)/np.sqrt(f_pp_dict[name].var_)
             else:
                 raise TypeError('Choosing F_stscl_add was coded to assume we scale features for each column')
@@ -418,30 +402,24 @@ def transform_data_generalized(ppi, f_pp_dict, f_dict, input_vert_vars, z,scale_
     else: #Using standard scalar to renormalize
         trans_data_dic = dict()
         for name in input_vert_vars:
-            if scale_per_column: #Should scle each column seperately - to verify!
+            if scale_per_column: 
                 trans_data_dic[name] = f_pp_dict[name].transform(f_dict[name])
-            else: #scale the whole feature together (not per column)
+            else: 
                 trans_data_dic[name] = np.reshape(f_pp_dict[name].transform(np.reshape(f_dict[name],(-1,1))),(f_dict[name].shape[0],f_dict[name].shape[1]))
 
-    if rewight_outputs: #If I want to give certain outputs larger weights.
+    if rewight_outputs: 
         print('rescaling outputs')
         print('length of the weight list is:', len(weight_list))
         for ind, name in enumerate(input_vert_vars,start=0):
-            # weight_list2 = [1.0,1.5,2.0,2.0,1.0]
             trans_data_dic[name] = trans_data_dic[name]*weight_list[ind]
 
-    # return_data = pack_list(trans_data_dic,input_vert_vars)
-    # return_data = ml_load.unpack_list(return_data, input_vert_vars, input_vert_dim)
-
-    # Return a dictionary of the transformed data output
     return trans_data_dic
 
 
-#Inverse  Transform data using initialized scaler
 def inverse_transform_data_generalized(ppi, f_pp_dict, f_dict, input_vert_vars,
                                        z,scale_per_column=False,rewight_outputs=False,weight_list=[1,1]):
 
-    if rewight_outputs: #If I want to give certain outputs larger weights. - I think I need it becasue the StandardScalar is performed without it.
+    if rewight_outputs: 
         for ind, name in enumerate(input_vert_vars,start=0):
             f_dict[name] = f_dict[name]/weight_list[ind]
 
@@ -458,9 +436,9 @@ def inverse_transform_data_generalized(ppi, f_pp_dict, f_dict, input_vert_vars,
     else:
         trans_data_dic = dict()
         for name in input_vert_vars:
-            if scale_per_column: #Should scle each column seperately - to verify!
+            if scale_per_column: 
                 trans_data_dic[name] = f_pp_dict[name].inverse_transform(f_dict[name])
-            else: #scale the whole feature together (not per column)
+            else: 
                 trans_data_dic[name] = np.reshape(f_pp_dict[name].inverse_transform(np.reshape(f_dict[name],(-1,1))),(f_dict[name].shape[0],f_dict[name].shape[1]))
     return_data = pack_list(trans_data_dic,input_vert_vars)
     # Return a numpy array of the transformed data output
@@ -505,25 +483,6 @@ def inverse_transform_data(ppi, pp, trans_data, z):
         return_data = pp.inverse_transform(trans_data)
     return return_data
 
-#
-# def load_one_y_generalized(f_ppi, o_ppi, f_pp, o_pp, est, ind_y, datafile, max_z, input_vert_vars, output_vert_vars,
-#                  n_trn_exs, rain_only, no_cos, use_rh, wind_input = False):
-#     """Returns n_samples 2*n_z array of true and predicted values
-#        at a given y"""
-#     # Load data
-#     f, o, y, z, rho, p = \
-#         LoadData(datafile, max_z, input_vert_vars, output_vert_vars, all_ys=False, ind_y=ind_y,
-#                  verbose=False, n_trn_exs=None, rain_only=rain_only,
-#                  no_cos=no_cos, use_rh=use_rh, wind_input = wind_input)
-#     # Calculate predicted output
-#
-#     # f_scl_dict = transform_data_generalized(f_ppi, f_pp, f_dict, input_vert_vars, z):
-#
-#     f_scl = transform_data(f_ppi, f_pp, f, z)
-#
-#
-#     o_pred_scl = est.predict(f_scl)
-
 
 
 def load_one_y(f_ppi, o_ppi, f_pp, o_pp, est, ind_y, datafile, max_z, input_vert_vars, output_vert_vars, input_vert_dim, output_vert_dim,
@@ -546,8 +505,7 @@ def load_one_y(f_ppi, o_ppi, f_pp, o_pp, est, ind_y, datafile, max_z, input_vert
     if do_nn:
         tmp_f_scl = torch.from_numpy(f_scl)
         est.eval()
-        o_pred_scl = est(tmp_f_scl.float()) # For some reason needed it when I rescled feature myself (Adding a const to variance)
-        # o_pred_scl = est(tmp_f_scl)
+        o_pred_scl = est(tmp_f_scl.float()) 
         o_pred_scl = o_pred_scl.detach().numpy()
     else:
         o_pred_scl = est.predict(f_scl)
@@ -558,13 +516,6 @@ def load_one_y(f_ppi, o_ppi, f_pp, o_pp, est, ind_y, datafile, max_z, input_vert
 
     o_dict = unpack_list(o, output_vert_vars,output_vert_dim)
 
-    # o_pred = inverse_transform_data(o_ppi, o_pp, o_pred_scl, z)
-    # Output true and predicted temperature and humidity tendencies
-
-    # T = unpack_o(o, 'T')
-    # q = unpack_o(o, 'q')
-    # T_pred = unpack_o(o_pred, 'T')
-    # q_pred = unpack_o(o_pred, 'q')
 
     return o_dict, o_pred_dict
 
@@ -583,28 +534,7 @@ def stats_by_yz(f_ppi, o_ppi, f_pp, o_pp, est, y, z, rho, datafile, n_trn_exs, i
     output_stat_dict['Pextreme_true']= np.zeros((len(y)))
     output_stat_dict['Pextreme_pred']= np.zeros((len(y)))
     #
-    # Tmean = np.zeros((len(y), len(z)))
-    # qmean = np.zeros((len(y), len(z)))
-    # Tvar = np.zeros((len(y), len(z)))
-    # qvar = np.zeros((len(y), len(z)))
-    # Tbias = np.zeros((len(y), len(z)))
-    # qbias = np.zeros((len(y), len(z)))
-    # rmseT = np.zeros((len(y), len(z)))
-    # rmseq = np.zeros((len(y), len(z)))
-    # rT = np.zeros((len(y), len(z)))
-    # rq = np.zeros((len(y), len(z)))
-    # Rsq_T = np.zeros((len(y), len(z)))
-    # Rsq_q = np.zeros((len(y), len(z)))
-    # Pmean_true = np.zeros((len(y)))
-    # Pmean_pred = np.zeros((len(y)))
-    # Pextreme_true = np.zeros((len(y)))
-    # Pextreme_pred = np.zeros((len(y)))
     for i in range(len(y)):
-        #print('Loading data for y {:d} of {:d}'.format(i, len(y)))
-        # T_true, q_true, T_pred, q_pred = \
-        #     load_one_y(f_ppi, o_ppi, f_pp, o_pp, est, i, datafile,
-        #                  np.max(z), input_vert_vars, output_vert_vars, input_vert_dim, output_vert_dim, n_trn_exs, rain_only,
-        #                  no_cos, use_rh, wind_input = wind_input)
         o_true_dict, o_pred_dict = \
             load_one_y(f_ppi, o_ppi, f_pp, o_pp, est, i, datafile,
                          np.max(z), input_vert_vars, output_vert_vars, input_vert_dim, output_vert_dim, n_trn_exs, rain_only,
@@ -623,7 +553,7 @@ def stats_by_yz(f_ppi, o_ppi, f_pp, o_pp, est, y, z, rho, datafile, n_trn_exs, i
                 o_true_dict[output_name], o_pred_dict[output_name],
                                            multioutput='raw_values'))
             for j in range(z_dim):
-                if np.sum(o_true_dict[output_name][:, j]==0) >  o_true_dict[output_name][:, j].shape[0]*0.99 and output_name!='qpout': # The first condition says that if there are many zeros I don't want to plot it and the second that if it is dqp it is ok.
+                if np.sum(o_true_dict[output_name][:, j]==0) >  o_true_dict[output_name][:, j].shape[0]*0.99 and output_name!='qpout': 
                     output_stat_dict[output_name + '_Rsq'][i, j] = np.nan
                     continue
                 output_stat_dict[output_name +'_r'][i,j] = scipy.stats.pearsonr(
@@ -640,41 +570,8 @@ def stats_by_yz(f_ppi, o_ppi, f_pp, o_pp, est, y, z, rho, datafile, n_trn_exs, i
                 output_stat_dict['Pextreme_pred'][i] = np.percentile(P_pred, 99.9)
 
 
-        # # Get mean and variance of true output
-        # Tmean[i, :] = np.mean(T_true, axis=0)
-        # qmean[i, :] = np.mean(q_true, axis=0)
-        # Tvar[i, :] = np.var(T_true, axis=0)
-        # qvar[i, :] = np.var(q_true, axis=0)
-        # # Get bias from means
-        # Tbias[i, :] = np.mean(T_pred, axis=0) - Tmean[i, :]
-        # qbias[i, :] = np.mean(q_pred, axis=0) - qmean[i, :]
-        # # Get rmse
-        # rmseT[i, :] = np.sqrt(
-        #     metrics.mean_squared_error(T_true, T_pred,
-        #                                multioutput='raw_values'))
-        # rmseq[i, :] = np.sqrt(
-        #     metrics.mean_squared_error(q_true, q_pred,
-        #                                multioutput='raw_values'))
-        # # Get correlation coefficients
-        # for j in range(len(z)):
-        #     rT[i, j], _ = scipy.stats.pearsonr(T_true[:, j], T_pred[:, j])
-        #     rq[i, j], _ = scipy.stats.pearsonr(q_true[:, j], q_pred[:, j])
-        #
-        # # Get coefficient of determination
-        # for j in range(len(z)):
-        #     Rsq_T[i, j] = metrics.r2_score(T_true[:, j], T_pred[:, j])
-        #     Rsq_q[i, j] = metrics.r2_score(q_true[:, j], q_pred[:, j])
-        #
-        # # Get precipitation mean and extremes
-        # P_true = atmos_physics.calc_precip(q_true, rho, z)
-        # P_pred = atmos_physics.calc_precip(q_pred, rho, z)
-        # Pmean_true[i] = np.mean(P_true)
-        # Pmean_pred[i] = np.mean(P_pred)
-        # Pextreme_true[i] = np.percentile(P_true, 99.9)
-        # Pextreme_pred[i] = np.percentile(P_pred, 99.9)
 
 
-    # return Tmean.T, qmean.T, Tvar.T, qvar.T, Tbias.T, qbias.T, rmseT.T, rmseq.T, rT.T, rq.T, Rsq_T.T, Rsq_q.T, Pmean_true, Pmean_pred, Pextreme_true, Pextreme_pred
     return output_stat_dict
 
 def GetDataPath(training_expt, wind_input = False,is_cheyenne=False,full_data_separate=False):
@@ -725,7 +622,6 @@ def get_f_o_pred_true(est_str, training_file, max_z, input_vert_vars, output_ver
         LoadData(training_file, max_z=max_z, input_vert_vars=input_vert_vars, output_vert_vars=output_vert_vars, all_ys=all_ys, ind_y=ind_y, n_trn_exs=n_trn_exs, rain_only=rain_only, no_cos=no_cos, use_rh=use_rh, wind_input = wind_input, rewight_outputs =rewight_outputs )
     print('JY - added weight list to plot - need to think if necessary')
     # Scale true values
-    # otrue_scl = transform_data(o_ppi, o_pp, otrue, z)
     otrue_dict = unpack_list(otrue,output_vert_vars,output_vert_dim)
     otrue_scl_dict = transform_data_generalized(o_ppi, o_pp, otrue_dict,output_vert_vars, z,scale_per_column, rewight_outputs=rewight_outputs,weight_list=weight_list)
     otrue_scl= pack_list(otrue_scl_dict, output_vert_vars)
@@ -737,21 +633,18 @@ def get_f_o_pred_true(est_str, training_file, max_z, input_vert_vars, output_ver
     f_scl_dict = transform_data_generalized(f_ppi, f_pp, f_dict, input_vert_vars, z,scale_per_column,rewight_outputs=False)
     f_scl = pack_list(f_scl_dict, input_vert_vars)
 
-    # f_scl = transform_data(f_ppi, f_pp, f, z)
     if do_nn:
         tmp_f_scl = torch.from_numpy(f_scl)
         est.eval()
-        opred_scl = est(tmp_f_scl.float()) # For some reason needed it when I rescled feature myself (Adding a const to variance)
-        # opred_scl = est(tmp_f_scl)
+        opred_scl = est(tmp_f_scl.float()) 
         opred_scl=opred_scl.detach().numpy()
     else:
-        opred_scl = est.predict(f_scl) ## This is where I need to change stuff!
+        opred_scl = est.predict(f_scl) 
     opred_scl_dict = unpack_list(opred_scl, output_vert_vars, output_vert_dim)
     opred = inverse_transform_data_generalized(o_ppi, o_pp, opred_scl_dict,output_vert_vars, z, scale_per_column,
                                                rewight_outputs=rewight_outputs,weight_list=weight_list)
 
 
-    # opred = inverse_transform_data(o_ppi, o_pp, opred_scl, z)
     return f_scl, opred_scl, otrue_scl, f, opred, otrue
 
 
@@ -763,43 +656,6 @@ def load_error_history(est_str,is_cheyenne=False):
     _, _, err, _, _, _, _, _, _, _ = pickle.load(open(base_dir + 'mldata_tmp/regressors/' +
                                                       est_str, + 'pkl', 'rb'))
     return err
-
-def convert_local(features,outputs,train_lev_num, input_vert_vars,input_vert_dim, output_vert_vars,output_vert_dim):
-
-    '''Convert data from all levels to local samples using train_lev_num as the number of levels of each sample
-    train_lev_num - the number of levels I want each sample to use for learning (for each type of feature)'''
-    in_single_dim = input_vert_dim.count(1) #counting inputs with single dimension
-    out_single_dim = output_vert_dim.count(1)
-
-    feature_num = len(input_vert_vars)
-    output_num = len(output_vert_vars)
-
-    feature_num_full = feature_num - in_single_dim
-    output_num_full = output_num - out_single_dim
-
-    if out_single_dim>1:
-        raise TypeError('local RF is cannot deal with single outputs')
-    if  all((i >= train_lev_num) or (i == 1) for i in input_vert_dim): # I can deal only with dim==1 or dim >train_lev_num
-        raise TypeError('There is a features which has a dimension that is not treated well ')
-    if all((i >= train_lev_num) or (i == 1) for i in output_vert_dim):
-        raise TypeError('There is a output which has a dimension that is not treated well ')
-
-    ind_f_o  = np.max(output_vert_dim)
-    print('assuming that the number of samples is equal to the number of levels in the output with maximum levels')
-    f_local = np.zeros(features.shape[0] * (features.shape[1]),train_lev_num*feature_num_full + in_single_dim) # Check the dimention order
-    o_local = np.zeros(outputs.shape[0] * (outputs.shape[1]),  output_num_full)  # Check the dimention order
-    dim_per_sample = outputs.shape[1]
-    ind_f_o = 0
-    for in_sample, out_sample in zip(features,outputs):
-        f_local[ind_f_o ,:],o_local[ind_f_o,:] = convert_one_sample_local(in_sample,out_sample)
-        ind_f_o = ind_f_o  + 1
-
-    return f_local, o_local
-
-# def convert_one_sample_local(in_sample,out_sample):
-#     '''Converts a pair of input output over the whole column to output and input samples in'''
-
-    # Dealing with boundaries (Questionable if this method should work near boundaries...):
 
 
 
@@ -814,13 +670,12 @@ def GetDataPath_nn(training_expt, wind_input = False,is_cheyenne=False,full_data
     else:
         datadir = base_dir + 'mldata_tmp/training_data/'
 
-    # practice_flag = False
     if full_data_separate:
         trainfile = datadir + training_expt + '_training_short.pkl'
         testfile = datadir + training_expt + '_testing_short.pkl'
     else:
-        trainfile = datadir + training_expt + '_training.pkl'  #'_training_flux20inout_x16.pkl'
-        testfile = datadir + training_expt + '_testing.pkl' #'_testing_flux20inout_x16.pkl'
+        trainfile = datadir + training_expt + '_training.pkl'  
+        testfile = datadir + training_expt + '_testing.pkl' 
 
     pp_str = training_expt + '_'
 

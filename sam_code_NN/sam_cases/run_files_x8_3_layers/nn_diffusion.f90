@@ -62,16 +62,6 @@ private
     real(4), allocatable, dimension(:)       :: yscale_mean
     real(4), allocatable, dimension(:)       :: yscale_stnd
 
-! Namelist:
-! nn_filename       data for random forest
-! no_ps             set scaled surface pressure to a constant (zero)
-! n_neurons         number of neurons
-! n_lev_nn          number of vertical levels used
-! y_standard_scaler use standard scaling for outputs
-! do_rh             use relative humidity instead of specific humidity
-
-
-!-----------------------------------------------------------------------
 
 contains
 
@@ -106,8 +96,6 @@ character(len=256) :: nn_filename
 !-------------allocate arrays and read data-------------------------
 
 
-!       nn_filename= '/glade/scratch/janniy/mldata_tmp/gcm_regressors/NN_tend_1_hidden_standard_15_23_in_23out_no_qp.nc'
-! if(masterproc)  write(*,*) nn_filename
 
     if(masterproc)  write(*,*) rf_filename_tkh
     nn_filename = rf_filename_tkh
@@ -142,10 +130,6 @@ character(len=256) :: nn_filename
      nrf = 15 ! Size in the vertical 
      nrfq = 14 !Size in the vertical  for advection
 
-
-! Open the file. NF90_NOWRITE tells netCDF we want read-only access
-! Get the varid of the data variable, based on its name.
-! Read the data.
 
       call check( nf90_open(     trim(nn_filename),NF90_NOWRITE,ncid ))
 
@@ -232,11 +216,12 @@ character(len=256) :: nn_filename
 !
 !   input:  tabs               absolute temperature 
 !           q                  total non-precipitating water
-!           qp                 precipitating water
-!           distance from equator
+!           v                  meridional wind
+!           u                  zonal wind
+!           surface wind 
+!           sst                sea surface temperatutre
 !   changes: t                 liquid static energy as temperature
 !            q                 total non-precipitating water
-!            qp                precipitating water
 !
 !-----------------------------------------------------------------------
 !
@@ -309,7 +294,7 @@ character(len=256) :: nn_filename
         dtndyvar = 1/rho(1)/dtndxvar
        features(4*nrf+1) = sqrt(real(0.5*(u(i,j,1)* dtndyvar +u(ic,j,1)* dtndyvar) ,4)**2 + real(0.5*(v(i,j,1)* dtndyvar + v(i,jc,1)*dtndyvar),4) **2)
        !Use SST here
-       features(4*nrf+2) = sstxy(i,j)    !abs(lat_v) !The comment on the dist from equator
+       features(4*nrf+2) = sstxy(i,j)    
 
 !Noralize features
        features = (features - xscale_mean) / xscale_stnd
@@ -322,10 +307,7 @@ character(len=256) :: nn_filename
         !print *, 'SHAPE of Z1', shape(z1)
 ! rectifier
         where (z1 .lt. 0.0)  z1 = 0.0
-
 ! forward prop to output layer
-
-        
         z2 = matmul( z1,r_w2) + r_b2
         where (z2 .lt. 0.0)  z2 = 0.0
 
@@ -337,12 +319,9 @@ character(len=256) :: nn_filename
 
        outputs = matmul( z4,r_w5) + r_b5
 
-              ! Separate out outputs into heating and moistening tendencies
         out_var_control =1
-       ! outputs(1) = max(0.,(outputs(1) * yscale_stnd(out_var_control))  +  yscale_mean(out_var_control))      
         outputs(1) = (outputs(1) * yscale_stnd(out_var_control))  +  yscale_mean(out_var_control) 
         out_var_control = out_var_control + 1
-        !outputs(2) = max(0.,(outputs(2) * yscale_stnd(out_var_control))  +  yscale_mean(out_var_control))          
         outputs(2) = (outputs(2) * yscale_stnd(out_var_control))  +  yscale_mean(out_var_control)
         out_var_control = out_var_control + 1
         outputs(3:2 + nrf) = (outputs(3:2 + nrf) * yscale_stnd(out_var_control))  +  yscale_mean(out_var_control)    
@@ -369,96 +348,6 @@ character(len=256) :: nn_filename
        end do
      end do
     
-!     t(i,j,1:nrf) = t(i,j,1:nrf)  + rad_tendency(1:nrf) * dtn     
-     !Bring to same units to where I plug it in the advecion scheme
-!     nn_T_adv_flux = nn_T_adv_flux*rev_dz
-!     nn_q_auto_flux = nn_q_auto_flux * dtn ! Converted to tendency with the correct time step
-!     nn_qp_fall_flux = nn_qp_fall_flux*rev_dz2 !Comment if I rebuild data - included because I did not analyze things well. 
-!if (jt==30.and.it==0) then
-!write(*,*) 'The outputs:'
-!write(*,*) shape(sstxy)
-!write(*,*) sstxy(1,:)
-!end if
-! 
-!write(*,*) 'The outputs:'
-!write(*,*) (outputs(nrf+1:2*nrf) * yscale_q_stnd)  +  yscale_q_mean
-!
-!write(*,*) 'The outputs_out111:'
-!write(*,*) outputs(1:10)
-!
-!!write(*,*) 'The inputs:'
-!!write(*,*) features
-!
-!write(*,*) 'r_w1:'
-!write(*,*) r_w1(1:3,1:3)
-!
-!write(*,*) 'r_w2:'
-!write(*,*) r_w2(1:3,1:3)
-!
-!write(*,*) 'r_w2_first:'
-!write(*,*) r_w2(1:3,1)
-!
-!
-!write(*,*) 'r_w2_second:'
-!write(*,*) r_w2(1:3,2)
-!
-!write(*,*) 'r_b1:'
-!write(*,*) r_b1(1:4)
-!
-!write(*,*) 'r_b2:'
-!write(*,*) r_b2(1:4)
-!
-!write(*,*) 'b_mean:'
-!write(*,*) batch_mean(1:4)
-!
-!write(*,*) 'b_stnd:'
-!write(*,*) batch_stnd(1:4)
-!
-!write(*,*) 'b_weight:'
-!write(*,*) batch_w(1:4)
-!
-!write(*,*) 'b_bias:'
-!write(*,*) batch_b(1:4)
-!
-!print *, 'SHAPE of Z1', shape(z1)
-!print *, 'SHAPE of Z2', shape(z2)
-!print *, 'SHAPE of r_w1', shape(r_w1)
-!print *, 'SHAPE of r_w2', shape(r_w2)
-!print *, 'SHAPE of outputs', shape(outputs)
-!print *, 'features(dim_counter) = ', features(dim_counter)
-!
-!open (unit = 7, file = "/glade/u/home/janniy/inputs3.txt", status='new')
-!write (7,*), features
-!close (7)
-!
-!open (unit = 8, file = "/glade/u/home/janniy/outputs3.txt", status='new')
-!write (8,*), outputs
-!close (8)
-!
-!
-!open (unit = 9, file = "/glade/u/home/janniy/z13.txt", status='new')
-!write (9,*), z1
-!close (9)
-!
-!open (unit = 10, file = "/glade/u/home/janniy/rw1_1.txt", status='new')
-!write (10,*), r_w1(:,1)
-!close (10)
-!
-!open (unit = 11, file = "/glade/u/home/janniy/rw1_2.txt", status='new')
-!write (11,*), r_w1(1,:)
-!close (11)
-!
-!
-!write(*,*) 'Who is in!!:',  jt, it
-!endif
-!!batch_mean)/ batch_stnd) * batch_w + batch_b
-!write(*,*) 'WTF:',  jt, it
-!stop
-!
-!endif
-
-
-
    end subroutine nn_diffusion
 
 

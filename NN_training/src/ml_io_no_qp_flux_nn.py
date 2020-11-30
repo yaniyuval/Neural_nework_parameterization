@@ -7,7 +7,7 @@ import glob
 import src.atmos_physics as atmos_physics
 import numpy.matlib
 import sys
-import random # Draw without replacement from list: random.sample(list)
+import random 
 
 
 
@@ -62,7 +62,7 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         base_dir = '/glade/work/janniy/'
         base_dir2 = base_dir
 
-    input_dir = base_dir + 'ML_convection_data/' + expt + '/'  # Yani - where I save the files with the diffusion
+    input_dir = base_dir + 'ML_convection_data/' + expt + '/'  
     output_dir = base_dir2 + 'mldata_tmp/training_data/'
 
     # seed random number generation for reproducibility
@@ -70,7 +70,7 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
 
 
     filename_wildcard = input_dir + expt + 'km12x576_576x1440x48_ctl_288_' + str(start_time).zfill(
-            10) + '_000*_diff_coarse_space_corrected_tkz' + str(flag_dict['resolution']) + '.nc4'  # New version of data
+            10) + '_000*_diff_coarse_space_corrected_tkz' + str(flag_dict['resolution']) + '.nc4'  
 
     print(filename_wildcard)
     filename = glob.glob(filename_wildcard)
@@ -116,7 +116,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
     if flag_dict['qn_resolved_as_var']:
         qnin = np.zeros((n_z_input, n_y, n_x_samp, n_files))
 
-    # Yani added:
     if flag_dict['do_hor_wind_input']:
         uin = np.zeros((n_z_input, n_y, n_x_samp, n_files))
         vin = np.zeros((n_z_input, n_y, n_x_samp, n_files))
@@ -134,43 +133,35 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         sst_input = np.zeros((n_y, n_x_samp, n_files))
 
     if flag_dict['do_q_surf_fluxes_out']:
-        qSurfout = np.zeros((n_y, n_x_samp, n_files))  # Yani added
-        tSurfout = np.zeros((n_y, n_x_samp, n_files))  # Yani added
+        qSurfout = np.zeros((n_y, n_x_samp, n_files))  
+        tSurfout = np.zeros((n_y, n_x_samp, n_files))  
 
     if flag_dict['do_z_diffusion_correction']:
         T_diff_f_out = np.zeros((n_z, n_y, n_x_samp, n_files))
         q_diff_f_out = np.zeros((n_z, n_y, n_x_samp, n_files))
 
     if flag_dict['output_precip']:
-        precip_out = np.zeros((n_y, n_x_samp, n_files))  # Yani added
+        precip_out = np.zeros((n_y, n_x_samp, n_files))  
 
     if flag_dict['do_radiation_output']:
-        Qradout = np.zeros((n_z, n_y, n_x_samp, n_files))  # Yani added
+        Qradout = np.zeros((n_z, n_y, n_x_samp, n_files))  
 
     if flag_dict['calc_tkz_z']:
-        tkh_zout = np.zeros((flag_dict['tkz_levels'], n_y, n_x_samp, n_files))  # Yani added
+        tkh_zout = np.zeros((flag_dict['tkz_levels'], n_y, n_x_samp, n_files))  
 
     if flag_dict['do_uv_surf_fluxes_out'] or flag_dict['do_momentum_output']:
         u_tend_out = np.zeros((n_z_input, n_y, n_x_samp, n_files))
         v_tend_out = np.zeros((n_z_input, n_y, n_x_samp, n_files))
         w_tend_out = np.zeros((n_z_input, n_y, n_x_samp, n_files))
 
-    # For flux form (I think at least for advection it makes sense... to conserve quanteties
     T_adv_out = np.zeros((n_z, n_y, n_x_samp, n_files))
     q_adv_out = np.zeros((n_z, n_y, n_x_samp, n_files))
-    q_auto_out = np.zeros((n_z, n_y, n_x_samp, n_files)) # Should be also used to calculate the tendency of T!
-    t_auto_out = np.zeros((n_z, n_y, n_x_samp, n_files))  # I can also predict it seperately... I guess it is a compromise between approximate conservation to simple prediction (which is closer to the sub-grid tendency)
-    # q_sed_out = np.zeros((n_z, n_y, n_x_samp, n_files))
-    # t_sed_out = np.zeros((n_z, n_y, n_x_samp, n_files))
+    q_auto_out = np.zeros((n_z, n_y, n_x_samp, n_files)) 
+    t_auto_out = np.zeros((n_z, n_y, n_x_samp, n_files))  
 
     q_sed_fluxi_out = np.zeros((n_z, n_y, n_x_samp, n_files))
     q_sed_fluxc_out = np.zeros((n_z, n_y, n_x_samp, n_files))
     q_sed_flux_tot = np.zeros((n_z, n_y, n_x_samp, n_files))
-
-
-    # if flag_dict['do_uv_surf_fluxes_out']:
-    #     uSurfout = np.zeros((n_y, n_x_samp, n_files))  # Yani added
-    #     vSurfout = np.zeros((n_y, n_x_samp, n_files))  # Yani added
 
 
     # Loop over files
@@ -201,8 +192,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         zq_adv_out = np.zeros((n_z, n_y, n_x))
         zt_auto_out = np.zeros((n_z, n_y, n_x))
         zq_auto_out = np.zeros((n_z, n_y, n_x))
-        # zq_sed_out = np.zeros((n_z, n_y, n_x))
-        # zt_sed_out = np.zeros((n_z, n_y, n_x))
 
         zq_sed_fluxi_out = np.zeros((n_z, n_y, n_x))
         zq_sed_fluxc_out = np.zeros((n_z, n_y, n_x))
@@ -213,20 +202,13 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         qtflux_diff_z = np.zeros((n_z, n_y, n_x))
         tflux_diff_coarse_z = np.zeros((n_z, n_y, n_x))
         qtflux_diff_coarse_z = np.zeros((n_z, n_y, n_x))
-        # qpflux_diff_z = np.zeros((n_z, n_y, n_x))
         qpflux_diff_coarse_z = np.zeros((n_z, n_y, n_x))
-
-        # from sedimentation
-        # cloud_qt_tend = np.zeros(
-        #     (n_z, n_y, n_x))  # found that there is no big difference between residuals and coarse - take coarse
-        # cloud_lat_heat = np.zeros(
-        #     (n_z, n_y, n_x))  # found that there is no big difference between residuals and coarse - take coarse
 
 
         cloud_qt_flux = np.zeros(
-            (n_z, n_y, n_x))  # found that there is no big difference between residuals and coarse - take coarse
+            (n_z, n_y, n_x))  
         cloud_lat_heat_flux = np.zeros(
-            (n_z, n_y, n_x))  # found that there is no big difference between residuals and coarse - take coarse
+            (n_z, n_y, n_x))  
 
         # fall tend
         dqp_fall = np.zeros((n_z, n_y, n_x))
@@ -241,8 +223,8 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             v = np.zeros((n_z, n_y, n_x))
 
         if flag_dict['do_q_surf_fluxes_out']:
-            zqSurfout = np.zeros((n_y, n_x))  # Yani added
-            ztSurfout = np.zeros((n_y, n_x))  # Yani added
+            zqSurfout = np.zeros((n_y, n_x))  
+            ztSurfout = np.zeros((n_y, n_x))  
 
         if flag_dict['do_momentum_output']:
             zu_adv_out = np.zeros((n_z, n_y, n_x))
@@ -250,8 +232,8 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             zw_adv_out = np.zeros((n_z, n_y, n_x))
 
         if flag_dict['do_uv_surf_fluxes_out']:
-            zuSurfout = np.zeros((n_y, n_x))  # Yani added
-            zvSurfout = np.zeros((n_y, n_x))  # Yani added
+            zuSurfout = np.zeros((n_y, n_x))  
+            zvSurfout = np.zeros((n_y, n_x))  
 
         if flag_dict['do_uv_surf_fluxes_out'] or flag_dict['do_momentum_output']:
             zu_tend_out = np.zeros((n_z, n_y, n_x))
@@ -263,32 +245,27 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             zq_diff_f_out = np.zeros((n_z, n_y, n_x))
 
         # Variables to calculate the diffusivity.
-        tkz_z = np.zeros((n_z, n_y, n_x))  # Yani added
-        Pr1 = np.zeros((n_z, n_y, n_x))  # Yani added
-        tkz_z_res = np.zeros((n_z, n_y, n_x))  # Yani added
-        Pr1_res = np.zeros((n_z, n_y, n_x))  # Yani added
-        # tkh_x = np.zeros((n_z, n_y, n_x))  # Yani added
-        # tkh_y = np.zeros((n_z, n_y, n_x))  # Yani added
-        tkh_z = np.zeros((n_z, n_y, n_x))  # Yani added
+        tkz_z = np.zeros((n_z, n_y, n_x))  
+        Pr1 = np.zeros((n_z, n_y, n_x))  
+        tkz_z_res = np.zeros((n_z, n_y, n_x))  
+        Pr1_res = np.zeros((n_z, n_y, n_x))  
+        tkh_z = np.zeros((n_z, n_y, n_x))  
 
-        if flag_dict['do_surf_flux_hemispheric_symmetric_correction']:  # Since I wanted to change how I calculate the surface scheme
+        if flag_dict['do_surf_flux_hemispheric_symmetric_correction']:  
             umin = 1.0
             cd = 1.1e-3
             wrk = (np.log(10 / 1.e-4) / np.log(z[0] / 1.e-4)) ** 2
             fluxbtfull = np.zeros((n_y, n_x))
             fluxbqt = np.zeros((n_y, n_x))
-            Tfull_diff_z1 = np.zeros((n_z,n_y, n_x)) #Yani added
-            Tfull_diff_z2 = np.zeros((n_z,n_y, n_x)) #Yani added
-            Tfull = np.zeros((n_z,n_y, n_x)) #Yani added
-            # s_wind= np.zeros((n_y, n_x))
+            Tfull_diff_z1 = np.zeros((n_z,n_y, n_x)) 
+            Tfull_diff_z2 = np.zeros((n_z,n_y, n_x)) 
+            Tfull = np.zeros((n_z,n_y, n_x)) 
             windspeed= np.zeros((n_y, n_x))
             deltfull= np.zeros((n_y, n_x))
             ssq= np.zeros((n_y, n_x))
             delqt= np.zeros((n_y, n_x))
 
         # Get filename
-
-
         filename_wildcard = input_dir + expt + 'km12x576_576x1440x48_ctl_288_' + str(file_time).zfill(
                 10) + '_000*_diff_coarse_space_corrected_tkz' + str(flag_dict['resolution']) + '.nc4'  # New version of data
 
@@ -297,14 +274,12 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
 
         # Open file and grab variables from it
         f = Dataset(filename[0], mode='r')
-        # n_z x n_y x n_x
         if flag_dict['tabs_resolved_init']:
             tabs = f.variables['TABS_RESOLVED_INIT'][:]  # absolute temperature (K)
         else:
             tabs = f.variables['TABS'][:]  # absolute temperature (K)
         t = f.variables['T'][:]  # liquid static energy/cp (K)
         Qrad = f.variables['QRAD'][:] / 86400  # rad heating rate (K/s)
-        # f.variables['QN'][:] - This is not good I think - it is the coarse grained value (in the end of the time step instead of the resolved at the beginning (?) of the time step
 
         if flag_dict['qn_coarse_init']:
             qt = (f.variables['Q'][:] + f.variables['QN_COARSE_INIT'][:]) / 1000.0  # total non-precip water (kg/kg)
@@ -322,31 +297,21 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         qpflux_z = f.variables['QP_FLUX_Z'][:] / 1000.0  # SGS qp flux kg/m^2/s
         qpflux_z_coarse = f.variables['QP_FLUX_COARSE_Z'][
                           :] / 1000.0  # SGS qp flux kg/m^2/s #I need it to the calculation of the dL/dz term
-        if sum(sum(sum(qpflux_z_coarse == 0))) == qpflux_z_coarse.shape[0] * qpflux_z_coarse.shape[1] * \
-                qpflux_z_coarse.shape[2]:  # means that we didn't really wrote well qpflux_coarse
-            raise Exception('Probably I did mess in the matlab files and didnt get correctly qpflux_z_coarse')
 
         if flag_dict['do_sedimentation']:
-            # raise Exception('I didnt calculate yet in the matlab the sedimentation! - Need to do it...')
-            # cloud_qt_tend = f.variables['QT_TEND_CLOUD_COARSE'][:]/1000.0 #found that there is no big difference between residuals and coarse - take coarse
-            # cloud_lat_heat = f.variables['LAT_HEAT_CLOUD_COARSE'][:] #found that there is no big difference between residuals and coarse - take coarse
-            # Decided to try a correction and see if in the online results it helps...
-            # cloud_qt_tend = f.variables['QT_TEND_CLOUD_RES'][:] / 1000.0
-            # cloud_lat_heat = f.variables['LAT_HEAT_CLOUD_RES'][:]
             cloud_qt_flux = f.variables['CLOUD_FZ_FLUX_RES'][:] / 1000.0
-            cloud_lat_heat_flux = f.variables['CLOUD_FZT_FLUX_RES'][:]  # found that there is no big difference between residuals and coarse - take coarse
+            cloud_lat_heat_flux = f.variables['CLOUD_FZT_FLUX_RES'][:]  
 
 
         if flag_dict['do_fall_tend']:
             raise Exception(
                 'do_fall_tend - I think that this should be true only in the case that I do the whole 3D fields... ...')
             dqp_fall = f.variables['DQP_FALL_RES'][
-                       :] / 1000.0  # Better to take the resolved (unless not doing the fall! - which is the case if not doing the full thing
+                       :] / 1000.0  
             t_fall = f.variables['T_FALL_RES'][:]
 
         w = f.variables['W'][:]  # m/s
         precip = f.variables['PRECIP'][:]  # precipitation flux kg/m^2/s
-        # Yani added
         if flag_dict['do_z_diffusion']:
             if flag_dict['Flux_for_TFULL']:
                 tflux_diff_z = f.variables['TFULL_DIFF_FLUX_Z'][:] # SGS t flux K kg/m^2/s
@@ -358,13 +323,10 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             tflux_diff_coarse_z = f.variables['T_DIFF_F_COARSE_Z'][
                                   :]  # SGS t flux K kg/m^2/s #Was there a reason that I used tfull flux ??
             qtflux_diff_coarse_z = f.variables['QT_DIFF_F_COARSE_Z'][:] / 1000.0  # SGS qt flux kg/m^2/s
-            # qpflux_diff_z = f.variables['QP_DIFF_FLUX_COARSE_Z'][:]/1000.0 # SGS qp flux kg/m^2/s
         if flag_dict['do_qp_diff_corr_to_T']:
             qpflux_diff_coarse_z = f.variables['QP_DIFF_F_COARSE_Z'][
                                    :] / 1000.0  # SGS qp flux kg/m^2/s Note that I need this variable
-            # in any case! because we use a different variable in the simple version...
 
-        # Yani added wind variables for prediction:
         if flag_dict['do_hor_wind_input'] or flag_dict['do_surf_wind']:
             u = f.variables['U'][:]
             v = f.variables['V'][:]
@@ -380,16 +342,13 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
                 tkz_z = f.variables['TKZ_COARSE'][:]  # diffusivity - m^2/s
                 Pr1 = f.variables['PR1_COARSE'][:]  # no units
 
-        if flag_dict['do_surf_flux_hemispheric_symmetric_correction'] and flag_dict['resolution'] == 32:  # Since I wanted to change how I calculate the surface scheme
+        if flag_dict['do_surf_flux_hemispheric_symmetric_correction'] and flag_dict['resolution'] == 32:  # Since I wanted to change how I calculate the surface scheme in the case I had x32 coarse graining factor
             gamaz = atmos_physics.g / atmos_physics.cp * z[0]
-            # t = f.variables['T'][:]
             if flag_dict['Flux_for_TFULL']:
                 tflux_diff_z = f.variables['TFULL_DIFF_F_COARSE_Z'][:]
-                # Tfull_diff_z2 = f.variables['TFULL_DIFF_FLUX_Z'][:]
                 Tfull = f.variables['TFULL'][:]
             else:
                 tflux_diff_z = f.variables['T_DIFF_F_COARSE_Z'][:]
-                # Tfull_diff_z2 = f.variables['T_DIFF_FLUX_Z'][:]
                 Tfull = f.variables['T'][:]
 
         if flag_dict['do_momentum_output']:
@@ -435,11 +394,9 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             ssq[:, :] = atmos_physics.sam_qsatw(sstxy_coarse[:, :], p[0])
             delqt[:, :] = qt[0, :, :] - ssq
             rhow = 1.16
-            fluxbtfull[:, :] = -cd * windspeed[:, :] * deltfull[:, :] * wrk * rhow  # I multiply by rho to be consistant with the matlab definitions.
+            fluxbtfull[:, :] = -cd * windspeed[:, :] * deltfull[:, :] * wrk * rhow  
             fluxbqt[:, :] = -cd * windspeed[:, :] * delqt[:, :] * wrk * rhow
-            # del111 = tflux_diff_z - Tfull_diff_z2
-            # aaa1111 = qtflux_diff_coarse_z - qtflux_diff_z
-            tflux_diff_z[0, :, :] = tflux_diff_z[0, :, :] - fluxbtfull  # Correcting the fluxes
+            tflux_diff_z[0, :, :] = tflux_diff_z[0, :, :] - fluxbtfull  
             qtflux_diff_z[0, :, :] = qtflux_diff_coarse_z[0, :, :] - fluxbqt
 
 
@@ -453,7 +410,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         if flag_dict['qn_resolved_as_var']:
             zqnin = qn
 
-        # Yani added
         if flag_dict['do_hor_wind_input']:
             zuin = u
             zvin = v
@@ -481,8 +437,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             zq_adv_out = qtflux_z
 
         if flag_dict['do_dqp']:
-            # for k in range(n_z):
-            # zTout[:, :, :] = zTout[:, :, :] + dqp_t[:, :, :]
             zt_auto_out[:, :, :] = dqp_t[:, :, :]
             zq_auto_out[:, :, :] = - dqp[:, :, :]
 
@@ -504,10 +458,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
                 zT_diff_f_out[k, :, :] = tflux_diff_z[k, :, :]
                 zq_diff_f_out[k, :, :] = qtflux_diff_z[k, :, :]
 
-        # Add sedimentation - I could in theory predict the ice and cloud fluxes... Seems actually more appropriate..!
-        # zt_sed_out[0:flag_dict['sed_level'], :, :] = cloud_lat_heat[0:flag_dict['sed_level'], :, :]
-        # zq_sed_out[0:flag_dict['sed_level'], :, :] = cloud_qt_tend[0:flag_dict['sed_level'], :, :]
-
         zq_sed_fluxc_out = ((atmos_physics.L + atmos_physics.Lf) * cloud_qt_flux + cloud_lat_heat_flux) / atmos_physics.Lf # This seems too large ???
         zq_sed_fluxi_out = - (atmos_physics.L * cloud_qt_flux + cloud_lat_heat_flux) / atmos_physics.Lf
         zq_sed_flux_tot  = cloud_qt_flux
@@ -519,19 +469,17 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         for k in range(n_z - 1):
             kb = max(0, k - 1)
             dfac_dz[k, :, :] = (fac[k + 1, :, :] - fac[k, :, :]) / rho_dz[k] * rho[k]
-            # need total qpflux (really should use rhow and interpolate qpflux)
 
         zTout = zTout + dfac_dz * (qpflux_z_coarse + qpflux_diff_coarse_z - precip) / rho[:, None,
-                                                                                      None]  # Yani - added qpflux_diff
+                                                                                      None]  
 
 
         if (flag_dict['do_radiation_output'] == False and flag_dict[
-            'do_radiation_in_Tz'] == True):  # Otherwise I predict radiation seperately.
+            'do_radiation_in_Tz'] == True):  
             print('mod rad')
             zTout[0:flag_dict['rad_level']] = zTout[0:flag_dict['rad_level']] + Qrad[0:flag_dict['rad_level']]
 
 
-        # print('mod include y as proxy for solar rad, sst, albedo')
         if flag_dict['dist_From_eq_in']:
             zalbedo_rad[:, :] = np.abs(y[:, None] - np.mean(y))
 
@@ -542,9 +490,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
 
 
         if flag_dict['calc_tkz_z']:
-            # for k in range(n_z-1):
-            # kc = k + 1
-            # tkh_z[k, j, i] = rdz5*(tkz_z[k,j,i] * Pr1[k,j,i] + tkz_z[kc,j,i] * Pr1[kc,j,i])
             if flag_dict['calc_tkz_z_correction']:
                 tkh_z[:, :, :] = tkz_z[:, :, :] * Pr1[:, :, :] - tkz_z_res[:, :, :] * Pr1_res[:, :, :]
             else:
@@ -553,25 +498,21 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         # Loop over y
         for j in range(zTin.shape[1]):
             # Randomly choose a few x's
-            truncate_edge = 2  # Yani added to avoid the boundaries which are less acurate
-            indexes_x = list(range(0 + truncate_edge, zTin.shape[2]- truncate_edge)) # list to draw from
+            truncate_edge = 2  
+            indexes_x = list(range(0 + truncate_edge, zTin.shape[2]- truncate_edge)) 
 
-            if len(indexes_x) < n_x_samp: # probably Consider all x's
-                indexes_x2 = list(range(0, zTin.shape[2]))  # list to draw from
+            if len(indexes_x) < n_x_samp: 
+                indexes_x2 = list(range(0, zTin.shape[2]))  
                 ind_x = random.sample(indexes_x2, n_x_samp)
                 if len(indexes_x2) != n_x_samp:
                     raise ValueError('I should choose or all x indices or less than this so I wont have edges')
             else: # Subset of X's
                 ind_x = random.sample(indexes_x,n_x_samp)
-            # ind_x = np.random.randint(0 + truncate_edge, zTin.shape[2] - truncate_edge, n_x_samp) # This can lead to sample repetitions!
 
 
-            # Numpy has some strange behavior when indexing and slicing are
-            # combined. See: http://stackoverflow.com/q/27094438
             Tin[:, j, :, ifile] = zTin[0:n_z_input, j, :][:, ind_x]
             qin[:, j, :, ifile] = zqin[0:n_z_input, j, :][:, ind_x]
             Tout[:, j, :, ifile] = zTout[:, j, :][:, ind_x]
-            # qout[:, j, :, ifile] = zqout[:, j, :][:, ind_x]
 
             T_adv_out[:, j, :, ifile] = zT_adv_out[:, j, :][:, ind_x]
             q_adv_out[:, j, :, ifile] = zq_adv_out[:, j, :][:, ind_x]
@@ -585,15 +526,14 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
 
             if flag_dict['qn_resolved_as_var']:
                 qnin[:, j, :, ifile] = zqnin[0:n_z_input, j, :][:, ind_x]
-            # Yani added
             if flag_dict['do_hor_wind_input']:
                 uin[:, j, :, ifile] = zuin[0:n_z_input, j, :][:, ind_x]
                 vin[:, j, :, ifile] = zvin[0:n_z_input, j, :][:, ind_x]
             if flag_dict['do_ver_wind_input']:
                 win[:, j, :, ifile] = zwin[0:n_z_input, j, :][:, ind_x]
             if flag_dict['do_q_surf_fluxes_out']:
-                qSurfout[j, :, ifile] = zqSurfout[j, :][ind_x]  # Yani added - Need to check!
-                tSurfout[j, :, ifile] = ztSurfout[j, :][ind_x]  # Yani added - Need to check!
+                qSurfout[j, :, ifile] = zqSurfout[j, :][ind_x]  
+                tSurfout[j, :, ifile] = ztSurfout[j, :][ind_x]  
 
             if flag_dict['do_z_diffusion_correction']:
                 T_diff_f_out[:, j, :, ifile] = zT_diff_f_out[: , j, :][:, ind_x]
@@ -602,7 +542,7 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             if flag_dict['output_precip']:
                 precip_out[j, :, ifile] = zprecip_out[j, :][ind_x]
             if flag_dict['do_surf_wind']:
-                uAbsSurfin[j, :, ifile] = zuAbsSurfin[j, :][ind_x]  # Yani added - Need to check!
+                uAbsSurfin[j, :, ifile] = zuAbsSurfin[j, :][ind_x]  
             if flag_dict['do_radiation_output']:
                 Qradout[0:flag_dict['rad_level'], j, :, ifile] = Qrad[0:flag_dict['rad_level'], j, :][:, ind_x]
             if flag_dict['calc_tkz_z']:
@@ -623,7 +563,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
     Tin = np.reshape(Tin, (n_z_input, n_y, -1))
     qin = np.reshape(qin, (n_z_input, n_y, -1))
     Tout = np.reshape(Tout, (n_z, n_y, -1))
-    # qout = np.reshape(qout, (n_z, n_y, -1))
 
     T_adv_out = np.reshape(T_adv_out, (n_z, n_y, -1))
     q_adv_out = np.reshape(q_adv_out, (n_z, n_y, -1))
@@ -641,8 +580,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         Qradout = np.reshape(Qradout, (n_z, n_y, -1))
     if flag_dict['calc_tkz_z']:
         tkh_zout = np.reshape(tkh_zout, (flag_dict['tkz_levels'], n_y, -1))
-
-    # Yani added
     if flag_dict['do_hor_wind_input']:
         uin = np.reshape(uin, (n_z_input, n_y, -1))
         vin = np.reshape(vin, (n_z_input, n_y, -1))
@@ -682,17 +619,15 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         randind_tst = randinds[i70:]
     else:
         i70 = int(train_size * Tin.shape[2])
-        # randind_trn =np.arange(0,i70,1)
         randind_trn = np.random.permutation(i70)
         tst_list = np.arange(i70, int(Tin.shape[2]), 1)
         randind_tst = np.random.permutation(tst_list)
 
     data_specific_description = create_specific_data_string_desc(flag_dict)
 
-    if rewight_outputs: # Give different weighting for each process...
+    if rewight_outputs: 
 
         if (flag_dict['do_dqp']) and (flag_dict['ver_adv_correct']) and (flag_dict['do_z_diffusion_correction']):
-            print('renormalized - flux form NN - TO DODODODODO!')
             norm_list = calculate_renormalization_factors_all_diff(Tout[0:flag_dict['input_upper_lev'],:, randind_trn],
                                                           T_adv_out[0:flag_dict['input_upper_lev'],:, randind_trn],
                                                           q_adv_out[0:flag_dict['input_upper_lev'],:, randind_trn],
@@ -764,9 +699,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         q_s_diff_in_test = create_difference_from_surface(qin[:, :, randind_tst])
         test_input_list.append(q_s_diff_in_test)
     if flag_dict['do_hor_wind_input']:
-        # uin = np.square(uin[:,:,:])
-        # vin = np.square(vin[:, :, :])
-        # Using minus v instead
         vin[:, 0:np.int(vin.shape[1] / 2), :] = -vin[:, 0:np.int(vin.shape[1] / 2), :]
         if flag_dict['do_momentum_output']:
             uin = vertical_smooth(uin)
@@ -795,8 +727,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         test_input_list.append(np.float32(sst_input[:, randind_tst]))
 
     if flag_dict['predict_tendencies']:
-        # train_input_list.extend([np.float32(Tout[:, :, randind_trn]), np.float32(qout[:, :, randind_trn])])
-        # test_input_list.extend([np.float32(Tout[:, :, randind_tst]), np.float32(qout[:, :, randind_tst])])
 
         train_input_list.append(np.float32(Tout[0:flag_dict['input_upper_lev'],:, randind_trn]))
         test_input_list.append(np.float32(Tout[0:flag_dict['input_upper_lev'],:, randind_tst]))
@@ -807,19 +737,11 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         do_sedimentation1 = 1
         do_autoconversion1 = 1
         if do_autoconversion1 :
-            # train_input_list.append(np.float32(t_auto_out[0:flag_dict['input_upper_lev'], :, randind_trn]))
-            # test_input_list.append(np.float32(t_auto_out[0:flag_dict['input_upper_lev'], :, randind_tst]))
-
             train_input_list.append(np.float32(q_auto_out[0:flag_dict['input_upper_lev'], :, randind_trn]))
             test_input_list.append(np.float32(q_auto_out[0:flag_dict['input_upper_lev'], :, randind_tst]))
         if do_sedimentation1 :
             train_input_list.append(np.float32(q_sed_flux_tot[0:flag_dict['input_upper_lev'], :, randind_trn]))
             test_input_list.append(np.float32(q_sed_flux_tot[0:flag_dict['input_upper_lev'], :, randind_tst]))
-            # train_input_list.append(np.float32(q_sed_fluxi_out[0:flag_dict['input_upper_lev'], :, randind_trn]))
-            # test_input_list.append(np.float32(q_sed_fluxi_out[0:flag_dict['input_upper_lev'], :, randind_tst]))
-            #
-            # train_input_list.append(np.float32(q_sed_fluxc_out[0:flag_dict['input_upper_lev'], :, randind_trn]))
-            # test_input_list.append(np.float32(q_sed_fluxc_out[0:flag_dict['input_upper_lev'], :, randind_tst]))
 
 
 
@@ -828,7 +750,7 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         test_input_list.append(np.float32(Qradout[0:flag_dict['rad_level'], :, randind_tst]))
 
     if flag_dict['do_z_diffusion_correction']:
-        if (flag_dict['do_q_surf_fluxes_out']): # The case I calculate the surface flux separately
+        if (flag_dict['do_q_surf_fluxes_out']): 
             ind_start_diff = 1
         else:
             ind_start_diff = 0
@@ -859,8 +781,6 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         train_input_list.append(norm_list)
         test_input_list.append(norm_list)
 
-    # pickle.dump(train_input_list, open(output_dir + expt + data_specific_description + '_training_NN_noqp_flux.pkl', 'wb'))
-    # pickle.dump(test_input_list, open(output_dir + expt + data_specific_description + '_testing_NN_noqp_flux.pkl', 'wb'))
 
     pickle.dump(train_input_list,open(output_dir + expt + data_specific_description + '_training.pkl', 'wb'))
     pickle.dump(test_input_list,open(output_dir + expt + data_specific_description + '_testing.pkl', 'wb'))
@@ -878,7 +798,6 @@ def write_netcdf_rf(est_str, datasource, output_vert_vars, output_vert_dim, rain
         output_filename = base_dir + 'mldata_tmp/gcm_regressors/' + est_str + str(ind1_exc) + str(ind2_exc)+ '.nc'
     else:
         output_filename = base_dir + 'mldata_tmp/gcm_regressors/'+est_str+'.nc'
-    # Load rf and preprocessors
     if exclusion_flag:
         est, _, errors, f_ppi, o_ppi, f_pp, o_pp, y, z, p, rho = \
             pickle.load(open(base_dir + 'mldata_tmp/regressors/' + est_str  + str(ind1_exc) + str(ind2_exc)+ '.pkl', 'rb'))
@@ -943,10 +862,6 @@ def write_netcdf_rf(est_str, datasource, output_vert_vars, output_vert_dim, rain
     print("Average number of samples per leaf node:")
     print(n_samples_leaf_nodes / n_leaf_nodes)
 
-    # Grab input and output normalization
-    # if f_ppi['name']=='StandardScaler':
-    #  fscale_mean = f_pp.mean_
-    #  fscale_stnd = f_pp.scale_
     if f_ppi['name'] != 'NoScaler':
         raise ValueError('Incorrect scaler name - Cannot treat any other case - in RF no need to')
 
@@ -974,8 +889,6 @@ def write_netcdf_rf(est_str, datasource, output_vert_vars, output_vert_dim, rain
     nc_split_feature[:] = split_feature
     nc_threshold[:] = threshold
     nc_values_predicted[:] = np.float32(values_predicted)
-    # nc_zdim_out_var_list[:] = output_vert_dim
-    # nc_name_out_var_list[:] = str_out
 
     # Write global file attributes
     ncfile.description = est_str

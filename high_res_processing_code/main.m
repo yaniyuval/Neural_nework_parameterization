@@ -96,14 +96,10 @@ if is_test
     compare_advection_qt_flux_z =1;
 end
 
-%For faster calculation I can drop some of parts of the code.
 do_sedimentation = 1;
 calc_advection_tend = 0;
 calc_diffusive_tend = 0;
 
-% numcores = feature('numcores');
-% p = parpool(numcores);
-% p = parpool(4);
 % timestep in seconds (needed in microphysics routines, but outputs are tendencies)
 % step 01-01: definitions and flags
 dtn = 24;
@@ -119,20 +115,8 @@ if is_test
     end_time = start_time; %Yani- try
 else
     if is_cheyenne
-%      text_time = fileread('/glade/u/home/janniy/SAMSON/matlab/num_1.txt');
-%      num_time_val = str2num(text_time);
-%      start_index = fileread('/glade/u/home/janniy/SAMSON/matlab/starting_1.txt');
-%      start_time_val = str2num(start_index);
-%      batch_size = 30;
-%      iter_per_node = 20;
-%      each_node_sim = iter_per_node*batch_size;
-%      start_time = 360000 + 1000*450 + (start_time_val-1)*each_node_sim*450 + (num_time_val-1) * batch_size.* 450 ;
-%      end_time = min(start_time + (batch_size-1)*450, 2520000);
-%      start_time = 360000 + 1001*450;
-%      end_time = start_time;
        start_time = 810000 +(1-1)*31*450;
        end_time = min(start_time + 30*450, 2520000);  
-   %    end_time = start_time;
     else
     start_time =360000;
     end_time = start_time + 1000.*450; % 2520000;
@@ -286,8 +270,6 @@ for i_exper = 1:length(exper)
             end
         end
         disp(filename)
-        %check if file exist
-        %         outfilename = [filename_base, '_diff_coarse_space', num2str(multiple_space), '.nc4'];
         if is_cheyenne
             outfilename_janni =['/glade/scratch/janniy/ML_convection_data/', exper{i_exper}, '/', exper{i_exper}, 'km12x576_576x1440x48_ctl_288_', num2str(time_index, '%010d'), '_000', num2str(cycle), '_diff_coarse_space_corrected_tkz'];
         else
@@ -303,8 +285,6 @@ for i_exper = 1:length(exper)
             end
         end
         if sum_files == length(resolutions)
-            %sprintf('Already calculated the fields - deleting! ')
-            %             delete(outfilename_janni);
             sprintf('Already calculated all the fields - skipping calc for this time step')
             continue
         end
@@ -325,14 +305,6 @@ for i_exper = 1:length(exper)
         t_flux_x = zeros(num_z,num_y,num_x);
         t_flux_y = zeros(num_z,num_y,num_x);
         t_flux_z = zeros(num_z,num_y,num_x);
-        %Not recommended to prealocate here since it is called from a
-        %function
-        %         qt_flux_x = zeros(num_z,num_y,num_x);
-        %         qt_flux_y = zeros(num_z,num_y,num_x);
-        %         qt_flux_z = zeros(num_z,num_y,num_x);
-        %         qp_flux_x = zeros(num_z,num_y,num_x);
-        %         qp_flux_y = zeros(num_z,num_y,num_x);
-        %         qp_flux_z = zeros(num_z,num_y,num_x);
         if calc_advection_tend
             tfull_flux_x_tend = zeros(num_z,num_y,num_x);
             tfull_flux_y_tend = zeros(num_z,num_y,num_x);
@@ -340,12 +312,6 @@ for i_exper = 1:length(exper)
             t_flux_x_tend = zeros(num_z,num_y,num_x);
             t_flux_y_tend = zeros(num_z,num_y,num_x);
             t_flux_z_tend = zeros(num_z,num_y,num_x);
-            %             qt_flux_x_tend = zeros(num_z,num_y,num_x);
-            %             qt_flux_y_tend = zeros(num_z,num_y,num_x);
-            %             qt_flux_z_tend = zeros(num_z,num_y,num_x);
-            %             qp_flux_x_tend = zeros(num_z,num_y,num_x);
-            %             qp_flux_y_tend = zeros(num_z,num_y,num_x);
-            %             qp_flux_z_tend = zeros(num_z,num_y,num_x);
         end
         
         %diffusion fluxes and tendencies
@@ -609,11 +575,9 @@ for i_exper = 1:length(exper)
                     if buoy_sgs<=0.0 % unstable/neutral
                         smix=grd;
                     else % stable
-                        smix = sqrt(0.76*tkz(k,j,i)/sqrt(buoy_sgs)/Ck); %This was corrected by pog - Yani to check
+                        smix = sqrt(0.76*tkz(k,j,i)/sqrt(buoy_sgs)/Ck); 
                         smix = min(grd,max(0.1*grd,smix));
                     end
-                    %% Yani try to approximate the error from the wrong time stepping
-                    %                     tke_approx(k,j,i) = (tkz(k,j,i)./(Ck.*smix)).^2;%This should be used for the coarse graining!
                     ratio=smix/grd;
                     Pr1(k,j,i)=1.+2.*ratio;
                     Cee=Ce1+Ce2*ratio;
@@ -670,26 +634,12 @@ for i_exper = 1:length(exper)
         rdz=1./dz;
         
         
-        %Yani: need to understand why he defines the flux with the 0.5 factor + what is rhow ? (Could it be related to the vert coordinate, but then why isn't it in the denominator?).
-        % Paul mentioned that this is a contiuum form of a simplification of some scheme. There might be a reference in the MARAT paper to the scheme.
         for k=1:num_z
             kb = max(1,k-1);
             w_rhow = w(k,:,:)*rhow(k);
             t_flux_z(k,:,:) = 0.5*w_rhow.*(t(k,:,:) + t(kb,:,:));%Yani simplified
-            % tflux(k,:,:)  = max(0.0, w_rhow).*t(kb,:,:) + ...
-            %                 min(0.0, w_rhow).*t(k,:,:) + ...
-            %                 0.5*abs(w_rhow).*(t(k,:,:)-t(kb,:,:));
             tfull_flux_z(k,:,:)  = 0.5*w_rhow.*(tfull(k,:,:) + tfull(kb,:,:));
-            %             qt_flux_z(k,:,:) = 0.5*w_rhow.*(qt(k,:,:) + qt(kb,:,:));
-            %             qp_flux_z(k,:,:) = 0.5*w_rhow.*(qp(k,:,:) + qp(kb,:,:));
         end
-        %         tflux = tflux_z;
-        %         tfull_flux = tfull_flux_z;
-        %         qtflux = qtflux_z;
-        %         qpflux = qpflux_z;
-        %zonal simplified Advection - I need to consider to advect all before
-        %diffusion is done (although I think it doesn't change accuracy by a
-        %lot)
         rhow_num_x = repmat(rho,[1,num_y]);
         for i=1:num_x
             ib = i-1;
@@ -699,20 +649,13 @@ for i_exper = 1:length(exper)
             u_rhow = u(:,:,i).*rhow_num_x;
             t_flux_x(:,:,i) = 0.5*u_rhow.*(t(:,:,ib) + t(:,:,i));
             tfull_flux_x(:,:,i) = 0.5*u_rhow.*(tfull(:,:,ib) + tfull(:,:,i));
-            %             qt_flux_x(:,:,i) = 0.5*u_rhow.*(qt(:,:,ib) + qt(:,:,i));
-            %             qp_flux_x(:,:,i) = 0.5*u_rhow.*(qp(:,:,ib) + qp(:,:,i));
         end
-        %meridional simplified Advection - I need to consider to advect all before
-        %diffusion is done (although I think it doesn't change accuracy by a
-        %lot)
         rhow_num_y = repmat(rho,[1,num_x]);
         for j=1:num_y
             jb = max(1,j-1);
             v_rhow = squeeze(v(:,j,:)).*rhow_num_y;
             t_flux_y(:,j,:) = 0.5*v_rhow.*squeeze(t(:,jb,:) + t(:,j,:));
             tfull_flux_y(:,j,:) = 0.5*v_rhow.*squeeze(tfull(:,jb,:) + tfull(:,j,:));
-            %             qt_flux_y(:,j,:) = 0.5*v_rhow.*squeeze(qt(:,jb,:) + qt(:,j,:));
-            %             qp_flux_y(:,j,:) = 0.5*v_rhow.*squeeze(qp(:,jb,:) + qp(:,j,:));
         end
         
         
@@ -720,13 +663,9 @@ for i_exper = 1:length(exper)
         if (calc_advection_tend == 0 && advect_fields) %If I want to advect things without calculating them
             for k = 1:num_z
                 if k < num_z
-                    %                     qp(k,:,:) =qp(k,:,:) - dtn.*(qp_flux_z(k+1,:,:) - qp_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
-                    %                     qt(k,:,:) =qt(k,:,:) - dtn.*(qt_flux_z(k+1,:,:) - qt_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                     t(k,:,:) =t(k,:,:) - dtn.*(t_flux_z(k+1,:,:) - t_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                     tfull(k,:,:) =tfull(k,:,:) - dtn.*(tfull_flux_z(k+1,:,:) - tfull_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                 elseif k == num_z
-                    %                     qp(k,:,:) =qp(k,:,:) - dtn.*(0.0 - qp_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
-                    %                     qt(k,:,:) =qt(k,:,:) - dtn.*(0.0 - qt_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                     t(k,:,:) =t(k,:,:) - dtn.*(0.0 - t_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                     tfull(k,:,:) =tfull(k,:,:) - dtn.*(0.0 - tfull_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                 else
@@ -735,13 +674,9 @@ for i_exper = 1:length(exper)
             end
             for i = 1:num_x
                 if i < num_x
-                    %                     qp(:,:,i) =qp(:,:,i) - dtn.*(qp_flux_x(:,:,i+1) - qp_flux_x(:,:,i))./(dx.*rhow_num_x);
-                    %                     qt(:,:,i) =qt(:,:,i) - dtn.*(qt_flux_x(:,:,i+1) - qt_flux_x(:,:,i))./(dx.*rhow_num_x);
                     t(:,:,i) =t(:,:,i) - dtn.*(t_flux_x(:,:,i+1) - t_flux_x(:,:,i))./(dx.*rhow_num_x);
                     tfull(:,:,i) =tfull(:,:,i) - dtn.*(tfull_flux_x(:,:,i+1) - tfull_flux_x(:,:,i))./(dx.*rhow_num_x);
                 elseif i == num_x
-                    %                     qp(:,:,i) =qp(:,:,i) - dtn.*(qp_flux_x(:,:,1) - qp_flux_x(:,:,num_x))./(dx.*rhow_num_x);
-                    %                     qt(:,:,i) =qt(:,:,i) - dtn.*(qt_flux_x(:,:,1) - qt_flux_x(:,:,num_x))./(dx.*rhow_num_x);
                     t(:,:,i) =t(:,:,i) - dtn.*(t_flux_x(:,:,1) - t_flux_x(:,:,i))./(dx.*rhow_num_x);
                     tfull(:,:,i) =tfull(:,:,i) - dtn.*(tfull_flux_x(:,:,1) - tfull_flux_x(:,:,i))./(dx.*rhow_num_x);
                 else
@@ -752,13 +687,9 @@ for i_exper = 1:length(exper)
             
             for j = 1:num_y
                 if j < num_y
-                    %                     qp(:,j,:) =squeeze(qp(:,j,:)) - dtn.*squeeze(qp_flux_y(:,j+1,:) - qp_flux_y(:,j,:))./(dy.*rhow_num_y);
-                    %                     qt(:,j,:) =squeeze(qt(:,j,:)) - dtn.*squeeze(qt_flux_y(:,j+1,:) - qt_flux_y(:,j,:))./(dy.*rhow_num_y);
                     t(:,j,:) =squeeze(t(:,j,:)) - dtn.*squeeze(t_flux_y(:,j+1,:) - t_flux_y(:,j,:))./(dy.*rhow_num_y);
                     tfull(:,j,:) =squeeze(tfull(:,j,:)) - dtn.*squeeze(tfull_flux_y(:,j+1,:) - tfull_flux_y(:,j,:))./(dy.*rhow_num_y);
                 elseif j == num_y
-                    %                     qp(:,j,:) =squeeze(qp(:,j,:)) - dtn.*(0.0 - squeeze(qp_flux_y(:,num_y,:)))./(dy.*rhow_num_y); % This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
-                    %                     qt(:,j,:) =squeeze(qt(:,j,:)) - dtn.*(0.0 - squeeze(qt_flux_y(:,num_y,:)))./(dy.*rhow_num_y);
                     t(:,j,:) =squeeze(t(:,j,:)) - dtn.*(0.0 - squeeze(t_flux_y(:,num_y,:)))./(dy.*rhow_num_y);
                     tfull(:,j,:) =squeeze(tfull(:,j,:)) - dtn.*(0.0 - squeeze(tfull_flux_y(:,num_y,:)))./(dy.*rhow_num_y);
                 else
@@ -777,70 +708,31 @@ for i_exper = 1:length(exper)
         if calc_advection_tend %If I realy want to calculate the tendency itself
             % {
             for k = 1:num_z-1
-                %                 qp_flux_z_tend(k,:,:) = - (qp_flux_z(k+1,:,:) - qp_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
-                %                 qt_flux_z_tend(k,:,:) = - (qt_flux_z(k+1,:,:) - qt_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                 t_flux_z_tend(k,:,:) = - (t_flux_z(k+1,:,:) - t_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
                 tfull_flux_z_tend(k,:,:) = - (tfull_flux_z(k+1,:,:) - tfull_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
-                %                 qp(k,:,:) = qp(k,:,:)  + qpflux_z_tend(k,:,:);
-                %                 qt(k,:,:) = qt(k,:,:)  + qtflux_z_tend(k,:,:);
-                %                 t(k,:,:) = t(k,:,:) + tflux_z_tend(k,:,:);
-                %                 tfull(k,:,:) = tfull(k,:,:) + tfull_flux_z_tend(k,:,:);
-                %
             end
             k = num_z;
-            %             qp_flux_z_tend(k,:,:) = -(0.0 - qp_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
-            %             qt_flux_z_tend(k,:,:) = - (0.0 - qt_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
             t_flux_z_tend(k,:,:) = - (0.0 - t_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
             tfull_flux_z_tend(k,:,:) = - (0.0 - tfull_flux_z(k,:,:))./(adz(k).*dz.*rho(k));
-            %             qp(k,:,:) = qp(k,:,:) + qpflux_z_tend(k,:,:);
-            %             qt(k,:,:) = qt(k,:,:)  + qtflux_z_tend(k,:,:);
-            %             t(k,:,:) = t(k,:,:) + tflux_z_tend(k,:,:);
-            %             tfull(k,:,:) = tfull(k,:,:) + tfull_flux_z_tend(k,:,:);
             
             for i = 1:num_x-1
-                %                 qp_flux_x_tend(:,:,i) =- (qp_flux_x(:,:,i+1) - qp_flux_x(:,:,i))./(dx.*rhow_num_x);
-                %                 qt_flux_x_tend(:,:,i) = - (qt_flux_x(:,:,i+1) - qt_flux_x(:,:,i))./(dx.*rhow_num_x);
                 t_flux_x_tend(:,:,i) = - (t_flux_x(:,:,i+1) - t_flux_x(:,:,i))./(dx.*rhow_num_x);
                 tfull_flux_x_tend(:,:,i) =  - (tfull_flux_x(:,:,i+1) - tfull_flux_x(:,:,i))./(dx.*rhow_num_x);
-                %                 qp(:,:,i) = qp(:,:,i) + qpflux_x_tend(:,:,i);
-                %                 qt(:,:,i) = qt(:,:,i)  + qtflux_x_tend(:,:,i);
-                %                 t(:,:,i) = t(:,:,i) + tflux_x_tend(:,:,i);
-                %                 tfull(:,:,i) = tfull(:,:,i) + tfull_flux_x_tend(:,:,i);
             end
             i = num_x;
-            %             qp_flux_x_tend(:,:,i) = -(qp_flux_x(:,:,1) - qp_flux_x(:,:,num_x))./(dx.*rhow_num_x);
-            %             qt_flux_x_tend(:,:,i) = -(qt_flux_x(:,:,1) - qt_flux_x(:,:,num_x))./(dx.*rhow_num_x);
             t_flux_x_tend(:,:,i) = - (t_flux_x(:,:,1) - t_flux_x(:,:,i))./(dx.*rhow_num_x);
             tfull_flux_x_tend(:,:,i) = - (tfull_flux_x(:,:,1) - tfull_flux_x(:,:,i))./(dx.*rhow_num_x);
-            %             qp(:,:,num_x) = qp(:,:,num_x) + qpflux_x_tend(:,:,i);  % This implies periodic boundary conditions. Should verify!
-            %             qt(:,:,num_x) = qt(:,:,num_x) + qtflux_x_tend(:,:,i); % This implies periodic boundary conditions. Should verify!
-            %             t(:,:,i) = t(:,:,i) + tflux_x_tend(:,:,i);
-            %             tfull(:,:,i) = tfull(:,:,i) + tfull_flux_x_tend(:,:,i);
             
             for j = 1:num_y-1
-                %                 qp_flux_y_tend(:,j,:) = - squeeze(qp_flux_y(:,j+1,:) - qp_flux_y(:,j,:))./(dy.*rhow_num_y);
-                %                 qt_flux_y_tend(:,j,:) = - squeeze(qt_flux_y(:,j+1,:) - qt_flux_y(:,j,:))./(dy.*rhow_num_y);
                 t_flux_y_tend(:,j,:) = - squeeze(t_flux_y(:,j+1,:) - t_flux_y(:,j,:))./(dy.*rhow_num_y);
                 tfull_flux_y_tend(:,j,:) = - squeeze(tfull_flux_y(:,j+1,:) - tfull_flux_y(:,j,:))./(dy.*rhow_num_y);
-                %                 qp(:,j,:) = squeeze(qp(:,j,:)) + squeeze(qpflux_y_tend(:,j,:));
-                %                 qt(:,j,:) = squeeze(qt(:,j,:)) + squeeze(qtflux_y_tend(:,j,:));
-                %                 t(:,j,:) = squeeze(t(:,j,:)) + squeeze(tflux_y_tend(:,j,:));
-                %                 tfull(:,j,:) = squeeze(tfull(:,j,:)) + squeeze(tfull_flux_y_tend(:,j,:));
-                %
             end
             j = num_y;
-            %             qp_flux_y_tend(:,j,:) = -(0.0 - squeeze(qp_flux_y(:,num_y,:)))./(dy.*rhow_num_y); % This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
             %             qt_flux_y_tend(:,j,:) = -(0.0 - squeeze(qt_flux_y(:,num_y,:)))./(dy.*rhow_num_y);
             t_flux_y_tend(:,j,:) = -(0.0 - squeeze(t_flux_y(:,num_y,:)))./(dy.*rhow_num_y);
             tfull_flux_y_tend(:,j,:) =-(0.0 - squeeze(tfull_flux_y(:,num_y,:)))./(dy.*rhow_num_y);
-            %             qp(:,num_y,:) = squeeze(qp(:,num_y,:))+ squeeze(qpflux_y_tend(:,j,:));
-            %             qt(:,num_y,:) = squeeze(qt(:,num_y,:)) + squeeze(qtflux_y_tend(:,j,:)); % This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
-            %             t(:,num_y,:) = squeeze(t(:,num_y,:))+ squeeze(tflux_y_tend(:,j,:));% This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
-            %             tfull(:,num_y,:) = squeeze(tfull(:,num_y,:)) +  squeeze(tfull_flux_y_tend(:,j,:)); % This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
             
             if advect_fields
-                %                 qp = qp + (qp_flux_x_tend + qp_flux_y_tend + qp_flux_z_tend)*dtn;
-                %                 qt = qt + (qt_flux_x_tend + qt_flux_y_tend + qt_flux_z_tend)*dtn;
                 t = t + (t_flux_x_tend + t_flux_y_tend + t_flux_z_tend)*dtn;
                 tfull = tfull + (tfull_flux_x_tend + tfull_flux_y_tend + tfull_flux_z_tend)*dtn;
             end
@@ -853,15 +745,11 @@ for i_exper = 1:length(exper)
         sprintf('try full advection for qp')
         
         %taken from fortran advect_scalar3D.f90 - when approximation for advection
-        %didn't work for qp,qt.
         
-        % [f_out,tfull_flux_x_func,tfull_flux_y_func,tfull_flux_z_func,tfull_adv_tend] = advect_scalar3D_func(tfull,u,v,w,rho,rhow,dx,dy,dz,dtn,num_x,num_y, num_z,adz);
-        % tfull = f_out;
         
         sprintf('full adv red')
         tic
         [f_out,qt_flux_x,qt_flux_y,qt_flux_z,qt_adv_tend] = advect_scalar3D_func_try_reduce_complexity(qt,u,v,w,rho,rhow,dx,dy,dz,dtn,num_x,num_y, num_z,adz);
-        %         [f_out,qt_flux_x,qt_flux_y,qt_flux_z,qt_adv_tend] = advect_scalar3D_func(qt,u,v,w,rho,rhow,dx,dy,dz,dtn,num_x,num_y, num_z,adz);
         
         if advect_fields
             qt = f_out;
@@ -874,13 +762,11 @@ for i_exper = 1:length(exper)
             qp = f_out;
         end
         if do_show_times, toc, end
-        % For some reason I can get negative qp values. I therefore remove these
-        % negative values.
         sprintf('the minimum qt, qp are:')
         min(min(min(qt)))
         min(min(min(qp)))
         
-        qp = max(0,qp); % It is possible that due to the approximate advection scheme I use I have errors that lead to negative qp values
+        qp = max(0,qp); 
         qt = max(0,qt);
         
         % 02:07a: vertical momentum advection
@@ -897,180 +783,6 @@ for i_exper = 1:length(exper)
         %%precip_fall
         % from precip.f90
         
-        % only kept parts needed to calculate precipitation flux
-        % and neglected non-oscillatory option for speed
-        
-        % % % %         precip = zeros(size(tabs));
-        % % % %
-        % % % %         % qp = dummy111;%NOTE!!!!yANi
-        % % % %         nzm = num_z;
-        % % % %         nz = nzm+1;
-        % % % %         fz = zeros(nz,1);
-        % % % %         tmp_qp = zeros(nz,1);
-        % % % %         mx = zeros(nz,1);
-        % % % %         mn = zeros(nz,1);
-        % % % %         www = zeros(nz,1);
-        % % % %         lfac = zeros(nz,1);
-        % % % %         irhoadz= zeros(nzm,1);
-        % % % %         fz(nz)=0.; %Need to initialize size.
-        % % % %         www(nz)=0.;
-        % % % %         lfac(nz)=0.;
-        % % % %         eps = 1.e-10;
-        % % % %         wp= zeros(nzm,1);
-        % % % %         iwmax = zeros(nzm,1);
-        % % % %
-        % % % %
-        % % % %         for k = 1:num_z
-        % % % %             kb = max(1,k-1);
-        % % % %             wmax       = dz*adz(kb)/dtn; %  ! Velocity equivalent to a cfl of 1.0.
-        % % % %             iwmax(k)   = 1./wmax;
-        % % % %         end
-        % % % %
-        % % % %         % Compute precipitation velocity and flux column-by-column
-        % % % %         for i=1:num_x
-        % % % %             for j=1:num_y
-        % % % %                 prec_cfl = 0.0;
-        % % % %                 for k=1:num_z
-        % % % %                     wp(k) = 0.0;
-        % % % %                     omp = max(0.,min(1.,(tabs(k,j,i)-tprmin)*a_pr));
-        % % % %                     lfac(k) = fac_cond+(1.-omp)*fac_fus;
-        % % % %
-        % % % %                     if(qp(k,j,i)>qp_threshold)
-        % % % %                         if(omp==1.)
-        % % % %                             wp(k)= rhofac(k)*vrain*(rho(k)*qp(k,j,i))^crain;
-        % % % %                         elseif(omp==0.)
-        % % % %                             omg = max(0.,min(1.,(tabs(k,j,i)-tgrmin)*a_gr));
-        % % % %                             qgg=omg*qp(k,j,i);
-        % % % %                             qss=qp(k,j,i)-qgg;
-        % % % %                             wp(k)= rhofac(k)*(omg*vgrau*(rho(k)*qgg)^cgrau ...
-        % % % %                                 +(1.-omg)*vsnow*(rho(k)*qss)^csnow);
-        % % % %                         else
-        % % % %                             omg = max(0.,min(1.,(tabs(k,j,i)-tgrmin)*a_gr));
-        % % % %                             qrr=omp*qp(k,j,i);
-        % % % %                             qss=qp(k,j,i)-qrr;
-        % % % %                             qgg=omg*qss;
-        % % % %                             qss=qss-qgg;
-        % % % %                             wp(k)=rhofac(k)*(omp*vrain*(rho(k)*qrr)^crain ...
-        % % % %                                 +(1.-omp)*(omg*vgrau*(rho(k)*qgg)^cgrau ...
-        % % % %                                 +(1.-omg)*vsnow*(rho(k)*qss)^csnow));
-        % % % %                         end
-        % % % %                         % note leave out the dtn/dz factor which is removed in write_fields2D.f90
-        % % % %                         % Define upwind precipitation flux
-        % % % %                         prec_cfl = max(prec_cfl,wp(k)*iwmax(k));
-        % % % %                         precip(k,j,i)=qp(k,j,i)*wp(k)*rhow(k);
-        % % % %                         %                    wp_tests(k,j,i) = wp(k); %This was similar (3OOM) to the wp I calculated in Fortran
-        % % % %                         %                 wp_test0(k,j,i) = wp(k);
-        % % % %                         %                 wp_test1(k,j,i) = -wp(k)*rho(k)*dtn/dz;
-        % % % %                         %                 wp_test2(k,j,i) = -wp(k)*rhow(k)*dtn/dz;
-        % % % %                         wp(k) = -wp(k)*rhow(k)*dtn/dz; %more accurate with rhow
-        % % % %
-        % % % %                     end % if
-        % % % %
-        % % % %
-        % % % %                 end
-        % % % %
-        % % % %
-        % % % %                 if (prec_cfl > 0.3) %sub stepping scheme
-        % % % %                     nprec = max(1,ceil(prec_cfl/0.3));
-        % % % %                     for k = 1:nzm
-        % % % %                         wp(k) = wp(k)/nprec;
-        % % % %                     end
-        % % % %                 else
-        % % % %                     nprec = 1;
-        % % % %                 end
-        % % % %                 for lll = 1:nprec
-        % % % %                     %% Added by Yani to take into account precip fall affect (in the calculation of dqp, and maybe later also)
-        % % % %                     for k = 1:nzm
-        % % % %                         tmp_qp(k) = qp(k,j,i); % Temporary array for qp in this column
-        % % % %                         irhoadz(k) = 1./(rho(k)*adz(k)); %! Useful factor - agrees better with the fortran irhoadz var than using rhow.
-        % % % %                     end
-        % % % %                     for k=1:nzm
-        % % % %                         kc=min(nzm,k+1);
-        % % % %                         kb=max(1,k-1);
-        % % % %                         mx(k)=max([tmp_qp(kb),tmp_qp(kc),tmp_qp(k)]);
-        % % % %                         mn(k)=min([tmp_qp(kb),tmp_qp(kc),tmp_qp(k)]);
-        % % % %                         fz(k)=tmp_qp(k)*wp(k);
-        % % % %                     end
-        % % % %
-        % % % %
-        % % % %                     for k=1:nzm
-        % % % %                         kc=k+1;
-        % % % %                         tmp_qp(k)=tmp_qp(k)-(fz(kc)-fz(k))*irhoadz(k);
-        % % % %                     end
-        % % % %
-        % % % %                     for k=1:nzm
-        % % % %                         %             ! Also, compute anti-diffusive correction to previous
-        % % % %                         %             ! (upwind) approximation to the flux
-        % % % %                         kb=max(1,k-1);
-        % % % %                         %             ! The precipitation velocity is a cell-centered quantity,
-        % % % %                         %             ! since it is computed from the cell-centered
-        % % % %                         %             ! precipitation mass fraction.  Therefore, a reformulated
-        % % % %                         %             ! anti-diffusive flux is used here which accounts for
-        % % % %                         %             ! this and results in reduced numerical diffusion.
-        % % % %                         www(k) = 0.5*(1.+wp(k)*irhoadz(k)) ...
-        % % % %                             *(tmp_qp(kb)*wp(kb) - tmp_qp(k)*wp(k)); %! works for wp(k)<0
-        % % % %                     end
-        % % % %
-        % % % %
-        % % % %                     for k=1:nzm
-        % % % %                         kc=min(nzm,k+1);
-        % % % %                         kb=max(1,k-1);
-        % % % %                         mx(k)=max([tmp_qp(kb),tmp_qp(kc),tmp_qp(k),mx(k)]);
-        % % % %                         mn(k)=min([tmp_qp(kb),tmp_qp(kc),tmp_qp(k),mn(k)]);
-        % % % %                         %                 mn_test(k,j,i) =mn(k); Works well compare to fortran when
-        % % % %                         %                 inputing the exact qp!
-        % % % %                     end
-        % % % %
-        % % % %                     for k=1:nzm
-        % % % %                         kc=min(nzm,k+1);
-        % % % %                         mx(k)=rho(k)*adz(k)*(mx(k)-tmp_qp(k)) ...
-        % % % %                             /(pn(www(kc)) + pp(www(k))+eps);
-        % % % %                         mn(k)=rho(k)*adz(k)*(tmp_qp(k)-mn(k)) ...
-        % % % %                             /(pp(www(kc)) + pn(www(k))+eps);
-        % % % %                     end
-        % % % %
-        % % % %                     for k=1:nzm
-        % % % %                         kb=max(1,k-1);
-        % % % %                         %                ! Add limited flux correction to fz(k).
-        % % % %                         fz(k) = fz(k) ...                       % ! Upwind flux
-        % % % %                             + pp(www(k))*min([1.,mx(k), mn(kb)]) ...
-        % % % %                             - pn(www(k))*min([1.,mx(kb),mn(k)]); % ! Anti-diffusive flux
-        % % % %                     end
-        % % % %
-        % % % %                     for k=1:nzm
-        % % % %                         kc=k+1;
-        % % % %                         %! Update precipitation mass fraction.
-        % % % %                         %! Note that fz is the total flux, including both the
-        % % % %                         %! upwind flux and the anti-diffusive correction.
-        % % % %                         dqp_fall(k,j,i)=dqp_fall(k,j,i)-(fz(kc)-fz(k))*irhoadz(k);
-        % % % %                         if do_fall_tend_qp
-        % % % %                             qp(k,j,i) = qp(k,j,i)  -(fz(kc)-fz(k))*irhoadz(k);
-        % % % %                         end
-        % % % %
-        % % % %                         %                 negative values?
-        % % % %                         lat_heat = -(lfac(kc)*fz(kc)-lfac(k)*fz(k))*irhoadz(k);
-        % % % %                         t_fall_tend(k,j,i)=t_fall_tend(k,j,i)-lat_heat;
-        % % % %                     end
-        % % % %
-        % % % %                     %%
-        % % % %
-        % % % %                 end
-        % % % %             end
-        % % % %         end
-        % % % %         %Yani:Note this change (It is in order to get the correct tfull for precip_proc
-        % % % %         %calculation. I need to think if it is necessary (and whether I want to
-        % % % %         %model it or not (in the precip fall).
-        % % % %         if do_fall_tend_tfull
-        % % % %             tfull = tfull + t_fall_tend; % I found that it is better not to change
-        % % % %         end
-        % % % %         % tfull- makes tfull less accurate for some reason - I need to think of it why and where I have an error.
-        % % % %         % calcu late energy flux associated with precipitation for use in tfull equation (SAM uses something a little different from equation A3 of SAM ref paper)
-        % % % %         %omp  = max(0.,min(1.,(tabs-tprmin)*a_pr)); % need to calculate again as used as scalar in precip_fall
-        % % % %         precip_energy = precip.*(fac_cond+(1.-omp_3d).*fac_fus); %I need to consider to recalc omp_3d due to changes in tabs
-        % % % %
-        % % % %         dqp_fall = dqp_fall./dtn; %(all the tendencies are devided by dtn - and multiplied in the RF in SAMSON).
-        % % % %         t_fall_tend = t_fall_tend./dtn;
-        % % % %
         
         sprintf('the precip fall func')
         tic
@@ -1136,11 +848,6 @@ for i_exper = 1:length(exper)
                 fluxbtfull(j,i) = -cd*windspeed*deltfull*wrk;
                 fluxbqt(j,i) = -cd*windspeed*delqt*wrk;
                 windspeed_high(j,i) = windspeed;
-                %Adding calculation for wind surface fluxes (I need to
-                %think if I want to introduce the error that SAM had in the
-                %wind surface fluxes.) in theory I can correct only the
-                %wind amplitude (though it is not the same for the wind
-                %flux... Decited to calculate the correct values...
                 fluxbu_samson(j,i) = -rho(1)*(u(1,j,i))*cd*windspeed*wrk*rdz*rhow(1);
                 fluxbv_samson(j,i) = -rho(1)*(v(1,j,i))*cd*windspeed*wrk*rdz*rhow(1);
                 ubot=u(1,j,i);
@@ -1166,27 +873,9 @@ for i_exper = 1:length(exper)
             end
         end
         
-        %         sprintf("vert diff calc for")
-        %         tic
-        %         for k=1:num_z-1
-        %             kc = k + 1;
-        %             rhoi = rhow(kc)/adzw(kc);
-        %             for i=1:num_x
-        %                 for j=1:num_y
-        %                     tkh_z=rdz5*(tkz(k,j,i)*Pr1(k,j,i)+tkz(kc,j,i)*Pr1(kc,j,i)); %Remember that this is not accurate since we couldn't calculate accurately tkz/tke for the time step
-        %                     t_diff_flx_z(kc,j,i)=-tkh_z*(t(kc,j,i)-t(k,j,i))*rhoi/ravefactor;
-        %                     tfull_diff_flx_z(kc,j,i)=-tkh_z*(tfull(kc,j,i)-tfull(k,j,i))*rhoi/ravefactor;
-        %                     qt_diff_flx_z(kc,j,i)=-tkh_z*(qt(kc,j,i)-qt(k,j,i))*rhoi/ravefactor;
-        %                     qp_diff_flx_z(kc,j,i)=-tkh_z*(qp(kc,j,i)-qp(k,j,i))*rhoi/ravefactor;
-        %                 end
-        %             end
-        %         end
-        %         toc
-        %%
         sprintf("vert diff calc mat")
-        %Yani checking calc diff
         tic
-        rhoi = rhow(2:end-1)./adzw(2:end-1)';%Yani - note the factor of dz here!.
+        rhoi = rhow(2:end-1)./adzw(2:end-1)';
         rhoi_rep = repmat(rhoi,[1,num_y,num_x]);
         tkh_z=rdz5*(tkz(1:num_z-1,:,:).*Pr1(1:num_z-1,:,:)+tkz(2:num_z,:,:).*Pr1(2:num_z,:,:));
         t_diff_flx_z(2:num_z,:,:)=-tkh_z.*(t(2:num_z,:,:)-t(1:num_z-1,:,:)).*rhoi/ravefactor;
@@ -1194,19 +883,15 @@ for i_exper = 1:length(exper)
         qt_diff_flx_z(2:num_z,:,:)=-tkh_z.*(qt(2:num_z,:,:)-qt(1:num_z-1,:,:)).*rhoi/ravefactor;
         qp_diff_flx_z(2:num_z,:,:)=-tkh_z.*(qp(2:num_z,:,:)-qp(1:num_z-1,:,:)).*rhoi/ravefactor;
         
-        tkz_out(1:num_z-1,:,:) = tkz(1:num_z-1,:,:); %Yani added...
+        tkz_out(1:num_z-1,:,:) = tkz(1:num_z-1,:,:); 
         
         
         if do_show_times, toc, end
-        %Yani checking calc diff
-        %%
         
-        % the above includes an additional 1/dz (in rdz and rdz5), so multiply by dz to get the actual fluxes
         t_diff_flx_z = t_diff_flx_z*dz;
         tfull_diff_flx_z = tfull_diff_flx_z*dz;
         qt_diff_flx_z = qt_diff_flx_z*dz;
         qp_diff_flx_z = qp_diff_flx_z*dz;
-        %
         
         if do_show_times, sprintf('step 02:09 (before vertical diffusive tendencies: %f', toc), end
         irhoadz = zeros([num_z,1]);
@@ -1247,9 +932,9 @@ for i_exper = 1:length(exper)
             %Horizontal diffusion
             rdx2=1./(dx*dx);
             rdy2=1./(dy*dy);
-            tkh_xy = tkz; %they are the same in the configuration we run
-            rdx5=0.5*rdx2;%  * grdf_x(k)= 1 in setgrid so I omit it;
-            rdy5=0.5*rdy2;%  * grdf_y(k)  = 1 in setgrid so I omit it;
+            tkh_xy = tkz;
+            rdx5=0.5*rdx2;
+            rdy5=0.5*rdy2;
             
             % x diffusion
             for k=1:num_z
@@ -1293,11 +978,10 @@ for i_exper = 1:length(exper)
                     for i=1:num_x
                         jc = j + 1;
                         if j == num_y
-                            %             tkx=rdy5*(tkh_xy(k,j,i)*Pr1(k,j,i)+0);
-                            t_diff_flx_y(k,j,i)=0;%-tkx*(0-t(k,j,i))*ravefactor;
-                            tfull_diff_flx_y(k,j,i)=0;%-tkx*(0-tfull(k,j,i))*ravefactor;
-                            qt_diff_flx_y(k,j,i)=0;%-tkx*(0-qt(k,j,i))*ravefactor;
-                            qp_diff_flx_y(k,j,i)=0;%-tkx*(0-qp(k,j,i))*ravefactor;
+                            t_diff_flx_y(k,j,i)=0;
+                            tfull_diff_flx_y(k,j,i)=0;
+                            qt_diff_flx_y(k,j,i)=0;
+                            qp_diff_flx_y(k,j,i)=0;
                         else
                             tkx=rdy5*(tkh_xy(k,j,i)*Pr1(k,j,i)+tkh_xy(k,jc,i)*Pr1(k,jc,i));
                             t_diff_flx_y(k,j,i)=-tkx*(t(k,jc,i)-t(k,j,i))*ravefactor;
@@ -1536,8 +1220,6 @@ for i_exper = 1:length(exper)
                 tlatqi(k) = 0.;
             end
             
-            %             fz = zeros(size(tabs)); %Yani - this is not the accurate dimension - check if important
-            %             fzt = zeros(size(tabs)); %Yani - this is not the accurate dimension
             coef_cl = 1.19e8*(3./(4.*3.1415*1000.*Nc0*1.e6))^(2./3.)*exp(5.*log(1.5)^2);
             
             for k = max(1,kmin-1):kmax
@@ -1611,11 +1293,7 @@ for i_exper = 1:length(exper)
                 end
             end
             
-            
-            % { It seems that these modifications does not make dqp  more accurate -
-            % need to check why.
             for k=max(1,kmin-2):kmax
-                % !   coef=dtn/(dz*adz(k)*rho(k))
                 for j=1:num_y
                     for i=1:num_x
                         coef=dtn/(dz*adz(k)*rho(k));
@@ -1628,8 +1306,6 @@ for i_exper = 1:length(exper)
                         
                         cloud_qt_tend(k,j,i) =  dqi;
                         %          ! Include this effect in the total moisture budget.
-                        %          qifall(k) = qifall(k) + dqi
-                        
                         %          ! The latent heat flux induced by the falling cloud ice enters
                         %          ! the liquid-ice static energy budget in the same way as the
                         %          ! precipitation.  Note: use latent heat of sublimation.
@@ -1639,8 +1315,6 @@ for i_exper = 1:length(exper)
                         if add_cloud_tfull_tend
                             tfull(k,j,i)  = tfull(k,j,i)  + lat_heat; % Yani Need to think when need to change also t not full
                         end
-                        %          ! Add divergence to liquid-ice static energy budget.
-                        %          tlatqi(k) = tlatqi(k) + lat_heat
                     end
                 end
             end
@@ -1746,7 +1420,7 @@ for i_exper = 1:length(exper)
         % get tendency in kg/kg/s
         dqp = dqp/dtn;
         omp_3d  = max(0.,min(1.,(tabs-tprmin)*a_pr));
-        fac_dqp_tfull = (fac_cond+(1.-omp_3d)*fac_fus); %This is approximated because I assume that the temperature 
+        fac_dqp_tfull = (fac_cond+(1.-omp_3d)*fac_fus); 
         dqp_t_tend = dqp .*fac_dqp_tfull;
         
         if do_show_times, sprintf('step 02:12: %f', toc), end
@@ -1815,10 +1489,6 @@ for i_exper = 1:length(exper)
             qp_flux_y_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
             qp_flux_z_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
             
-%             qp_coarse_init = zeros(num_z,num_blocks_y,num_blocks_x);
-%             qv_coarse_init = zeros(num_z,num_blocks_y,num_blocks_x);
-%             qn_coarse_init = zeros(num_z,num_blocks_y,num_blocks_x);
-
             if calc_advection_tend
                 tfull_flux_x_tend_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
                 tfull_flux_y_tend_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
@@ -1913,21 +1583,12 @@ for i_exper = 1:length(exper)
                 qp_diff_z_tend_resolved = zeros(num_z,num_blocks_y,num_blocks_x);
             end
             
-            %Precip_fall tendencies
-            %         dqp_fall = zeros(num_z,num_y,num_x);
-            %         t_fall_tend =  zeros(num_z,num_y,num_x);
             
             dqp_fall_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
             t_fall_tend_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
             
-            %         dqp_fall_resolved = zeros(num_z,num_blocks_y,num_blocks_x);
-            %         t_fall_tend_resolved = zeros(num_z,num_blocks_y,num_blocks_x);
-            
-            %precip
             precip_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
-            %         precip_resolved = zeros(num_z,num_blocks_y,num_blocks_x);
             precip_energy_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
-            %         precip_energy_resolved = zeros(num_z,num_blocks_y,num_blocks_x);
             
             cloud_lat_heat_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
             cloud_qt_tend_coarse = zeros(num_z,num_blocks_y,num_blocks_x);
@@ -2017,7 +1678,7 @@ for i_exper = 1:length(exper)
                     i_indices_x = [1:multiple_space/2,size(u,3)-multiple_space./2+2:size(u,3)]; 
                     i_indices_x2 = [multiple_space/2+1,size(u,3)-multiple_space./2 + 1];
                 else
-                    i_indices_x = [(i-1)*multiple_space+1 - multiple_space/2 + 1:(i*multiple_space-multiple_space/2)]; %I need to actually take one more data point - so there are data points that are taken twice - with half the weight
+                    i_indices_x = [(i-1)*multiple_space+1 - multiple_space/2 + 1:(i*multiple_space-multiple_space/2)]; 
                     i_indices_x2 = [(i-1)*multiple_space+1 - multiple_space/2,i*multiple_space - multiple_space/2 + 1];
                 end
 
@@ -2029,7 +1690,7 @@ for i_exper = 1:length(exper)
                         j_indices_y = 1;
                         j_indices_y2 =1; 
                     else
-                        j_indices_y = [(j-1)*multiple_space+1 - multiple_space/2 + 1:(j*multiple_space - multiple_space/2)]; %I need to actually take one more data point - so there are data points that are taken twice - with half the weight
+                        j_indices_y = [(j-1)*multiple_space+1 - multiple_space/2 + 1:(j*multiple_space - multiple_space/2)]; 
                         j_indices_y2 = [(j-1)*multiple_space+1 - multiple_space/2,j*multiple_space - multiple_space/2 + 1];
                     end
                     
@@ -2112,9 +1773,9 @@ for i_exper = 1:length(exper)
                         tfull_coarse(k,j,i) = mean(select(:));
                         
                         select = qv(k,j_indices,i_indices);
-                        qv_coarse(k,j,i) = mean(select(:));%Should never use YAni
+                        qv_coarse(k,j,i) = mean(select(:));
                         
-                        select = qn(k,j_indices,i_indices); % This is a non prognostic variable - NOT SUPPOSE TO USE, BUT RECALCULATE. ONLY USED FOR QT_COARSE CALCULATION AND THEN REDIFINE ! 
+                        select = qn(k,j_indices,i_indices); 
                         qn_coarse(k,j,i) = mean(select(:));
                         
                         select = qp(k,j_indices,i_indices);
@@ -2153,10 +1814,9 @@ for i_exper = 1:length(exper)
                     
                     for k=1:num_z
                         
-                        select = Qrad(k,j_indices,i_indices); % Shouldn't we calculate really the radiation ? is it good enough just to take the coarse grain ?
+                        select = Qrad(k,j_indices,i_indices); 
                         Qrad_coarse(k,j,i) = mean(select(:));
                         
-                        %Yani added recently
                         %Advection fluxes
                         
                         select = tfull_flux_x(k,j_indices,i_indices);
@@ -2215,23 +1875,6 @@ for i_exper = 1:length(exper)
                             select = t_flux_z_tend(k,j_indices,i_indices);
                             t_flux_z_tend_coarse(k,j,i) = mean(select(:));
                             
-                            %                         select = qt_flux_x_tend(k,j_indices,i_indices);
-                            %                         qt_flux_x_tend_coarse(k,j,i) = mean(select(:));
-                            %
-                            %                         select = qt_flux_y_tend(k,j_indices,i_indices);
-                            %                         qt_flux_y_tend_coarse(k,j,i) = mean(select(:));
-                            %
-                            %                         select = qt_flux_z_tend(k,j_indices,i_indices);
-                            %                         qt_flux_z_tend_coarse(k,j,i) = mean(select(:));
-                            %
-                            %                         select = qp_flux_x_tend(k,j_indices,i_indices);
-                            %                         qp_flux_x_tend_coarse(k,j,i) = mean(select(:));
-                            %
-                            %                         select = qp_flux_y_tend(k,j_indices,i_indices);
-                            %                         qp_flux_y_tend_coarse(k,j,i) = mean(select(:));
-                            %
-                            %                         select = qp_flux_z_tend(k,j_indices,i_indices);
-                            %                         qp_flux_z_tend_coarse(k,j,i) = mean(select(:));
                         end
                         %diffusion fluxes
                         select = tfull_diff_flx_x(k,j_indices,i_indices);
@@ -2328,7 +1971,6 @@ for i_exper = 1:length(exper)
                         
                         select = dqp_t_tend(k,j_indices,i_indices);
                         dqp_t_tend_coarse(k,j,i) = mean(select(:));
-                        %precip (do I need it ?)
                         select = precip(k,j_indices,i_indices);
                         precip_coarse(k,j,i) = mean(select(:));
                         
@@ -2364,7 +2006,6 @@ for i_exper = 1:length(exper)
             qv_coarse_init = qv_coarse;
             qn_coarse_init = qn_coarse;
             qp_coarse_init = qp_coarse;
-            %Calculation of qn_resolved and tabs_resolved and redifine
 
 
 [qn_resolved, tabs_resolved, qt_coarse, qp_coarse,~,~] = update_qn_tabs(tbgmax, tbgmin, tprmax, tprmin, fac_cond, fac_fus, fac_sub, tgrmax, tgrmin, qp_threshold, num_z, ...
@@ -2383,9 +2024,6 @@ for i_exper = 1:length(exper)
             end
             rh_init = qt_coarse./qsat_resolved_init;
 
-% 
-% qn_coarse_end  = qn_coarse;       
-% tabs_coarse_end = tabs_coarse;            
             
             
             %%
@@ -2398,11 +2036,6 @@ for i_exper = 1:length(exper)
             dy_coarse= dy.*multiple_space;
             
             
-            % full t including precipitating condensates
-            %         tfull_coarse = tabs_coarse + gamaz - (fac_cond+(1.-omn_3d_coarse).*fac_fus).*qn_coarse - ...
-            %             (fac_cond+(1.-omp_3d_coarse).*fac_fus).*qp_coarse;
-            %Yani - I am not sure if I should calculate tfull_coarse from here,
-            %or use the coarse grained value
             
             % from setgrid.f90
             dz = 0.5*(z(1)+z(2));
@@ -2426,9 +2059,7 @@ for i_exper = 1:length(exper)
             
             %%
             % Step 03:05:Calculate shear_prod3D.f90 for the tke/tkz calculation
-            %         clear def2
             def2_coarse = shear_prod3D(u_coarse,v_coarse,w_coarse,dx_coarse,dy_coarse,dz,adz,adzw,num_blocks_x,num_blocks_y,num_z,ravefactor);
-            %         def2_coarse = shear_prod3D(u_coarse,v_coarse,w_coarse,dx_coarse,dy_coarse,dz,adz,adzw,num_blocks_x,num_blocks_y,num_z,ravefactor);
             
             
             %%
@@ -2473,9 +2104,6 @@ for i_exper = 1:length(exper)
                 
                 % following from tke_full.f90
                 
-                %Yani tests:
-                %                       qp_end_of_step = qp;
-                %                       qp = dummy55; % beginnin of step
                 
                 
                 betdz=bet/dz/(adzw(kc)+adzw(k));
@@ -2523,38 +2151,6 @@ for i_exper = 1:length(exper)
                                 +0.61*tabs_coarse(k,j,i)*(qt_coarse(kc,j,i)-qt_coarse(kb,j,i)) ...
                                 +(bbb*lstarp-tabs_coarse(k,j,i))*(qp_coarse(kc,j,i)-qp_coarse(kb,j,i)) );
                         end
-                        %                     aaa(k,j,i) = buoy_sgs;
-                        %             dum11(k,j,i) = bbb; %exact when taken in matlab in the beginning of the code
-                        %             dum13(k,j,i) = qp(k,j,i); %exact when taken in matlab in the beginning of the code
-                        %
-                        % % % % % % % %                     if buoy_sgs<=0.0 % unstable/neutral
-                        % % % % % % % %                         smix=grd;
-                        % % % % % % % %                     else % stable
-                        % % % % % % % %                         % HERE I CALCULATE THE smix differently (via
-                        % % % % % % % %                         % tke_aoprox)
-                        % % % % % % % %                         %                         smix = (0.76*tkz(k,j,i)/buoy_sgs.^0.5/Ck)^0.5; %This was corrected by pog - Yani to check
-                        % % % % % % % %
-                        % % % % % % % %                         %                         tke_tmp = (tkz(k,j,i)./(Ck.*smix)).^2;
-                        % % % % % % % %                         smix = 0.76*(tke_approx_coarse(k,j,i)/buoy_sgs+1.e-10)^0.5; % Use the 1.e-10 factor from fortran
-                        % % % % % % % %
-                        % % % % % % % %                         % Note that tkz in the diffusive scheme is not
-                        % % % % % % % %                         % tkz in the fortran (Yani thinks).
-                        % % % % % % % %                         smix = min(grd,max(0.1*grd,smix));
-                        % % % % % % % %                     end
-                        % % % % % % % %                     %% Yani try to approximate the error from the wrong time stepping
-                        % % % % % % % %                     %                     tke_approx(k,j,i) = (tkz(k,j,i)./(Ck.*smix)).^2;%This should be used for the coarse graining!
-                        % % % % % % % %
-                        % % % % % % % %
-                        % % % % % % % %                     ratio=smix/grd;
-                        % % % % % % % %                     Pr1_resolved(k,j,i)=1.+2.*ratio;
-                        % % % % % % % %                     Cee=Ce1+Ce2*ratio;
-                        % % % % % % % %                     tkz_coarse(k,j,i)=sqrt(Ck^3/Cee*max(0.,def2(k,j,i)-Pr1_resolved(k,j,i)*buoy_sgs))*smix^2;
-                        % % % % % % % %
-                        % % % % % % % %
-                        % % % % % % % %                     %%
-                        % % % % % % % %                     if Pr1_resolved(k,j,i)>3 || Pr1_resolved(k,j,i)<1.2
-                        % % % % % % % %                         error('Pr1 out of range')
-                        % % % % % % % %                     end
                         
                         
                         %try iterative solution.
@@ -2566,7 +2162,7 @@ for i_exper = 1:length(exper)
                                 smix_resolved=grd;
                             else % stable
                                 if hhh>1
-                                    smix_resolved = sqrt(0.76*tkz_out_resolved(k,j,i)/sqrt(buoy_sgs)/Ck); %This was corrected by pog - Yani to check
+                                    smix_resolved = sqrt(0.76*tkz_out_resolved(k,j,i)/sqrt(buoy_sgs)/Ck); 
                                 end
                                 smix_resolved = min(grd,max(0.1*grd,smix_resolved));
                             end
@@ -2578,7 +2174,6 @@ for i_exper = 1:length(exper)
                             Pr1_resolved(k,j,i)=1.+2.*ratio_i;
                             Cee_i=Ce1+Ce2*ratio_i;
                             tkz_out_resolved(k,j,i)=sqrt(Ck^3/Cee_i*max(0.,def2_coarse(k,j,i)-Pr1_resolved(k,j,i)*buoy_sgs))*smix_resolved^2;
-                            %                         tke_approx_coarse(k,j,i) = (tkz_out_resolved(k,j,i)./(Ck.*smix_resolved)).^2;%This should be used for the coarse graining!
                             if (buoy_sgs<0)
                                 break
                             elseif (hhh>1 && abs(smix_resolved-smix_prev)./(abs(smix_prev + smix_resolved))<0.00001)
@@ -2637,17 +2232,9 @@ for i_exper = 1:length(exper)
                 kb = max(1,k-1);
                 w_rhow = w_coarse(k,:,:)*rhow(k);
                 t_flux_z_resolved(k,:,:) = 0.5*w_rhow.*(t_coarse(k,:,:) + t_coarse(kb,:,:));%Yani simplified
-                % tflux(k,:,:)  = max(0.0, w_rhow).*t(kb,:,:) + ...
-                %                 min(0.0, w_rhow).*t(k,:,:) + ...
-                %                 0.5*abs(w_rhow).*(t(k,:,:)-t(kb,:,:));
                 tfull_flux_z_resolved(k,:,:)  = 0.5*w_rhow.*(tfull_coarse(k,:,:) + tfull_coarse(kb,:,:));
-                %             qt_flux_z_resolved(k,:,:) = 0.5*w_rhow.*(qt_coarse(k,:,:) + qt_coarse(kb,:,:));
-                %             qp_flux_z_resolved(k,:,:) = 0.5*w_rhow.*(qp_coarse(k,:,:) + qp_coarse(kb,:,:));
             end
             
-            %zonal simplified Advection - I need to consider to advect all before
-            %diffusion is done (although I think it doesn't change accuracy by a
-            %lot)
             rhow_num_x = repmat(rho,[1,num_blocks_y]);
             for i=1:num_blocks_x
                 ib = i-1;
@@ -2657,20 +2244,13 @@ for i_exper = 1:length(exper)
                 u_rhow = u_coarse(:,:,i).*rhow_num_x;
                 t_flux_x_resolved(:,:,i) = 0.5*u_rhow.*(t_coarse(:,:,ib) + t_coarse(:,:,i));
                 tfull_flux_x_resolved(:,:,i) = 0.5*u_rhow.*(tfull_coarse(:,:,ib) + tfull_coarse(:,:,i));
-                %             qt_flux_x_resolved(:,:,i) = 0.5*u_rhow.*(qt_coarse(:,:,ib) + qt_coarse(:,:,i));
-                %             qp_flux_x_resolved(:,:,i) = 0.5*u_rhow.*(qp_coarse(:,:,ib) + qp_coarse(:,:,i));
             end
-            %meridional simplified Advection - I need to consider to advect all before
-            %diffusion is done (although I think it doesn't change accuracy by a
-            %lot)
             rhow_num_y = repmat(rho,[1,num_blocks_x]);
             for j=1:num_blocks_y
                 jb = max(1,j-1);
                 v_rhow = squeeze(v_coarse(:,j,:)).*rhow_num_y;
                 t_flux_y_resolved(:,j,:) = 0.5*v_rhow.*squeeze(t_coarse(:,jb,:) + t_coarse(:,j,:));
                 tfull_flux_y_resolved(:,j,:) = 0.5*v_rhow.*squeeze(tfull_coarse(:,jb,:) + tfull_coarse(:,j,:));
-                %             qt_flux_y_resolved(:,j,:) = 0.5*v_rhow.*squeeze(qt_coarse(:,jb,:) + qt_coarse(:,j,:));
-                %             qp_flux_y_resolved(:,j,:) = 0.5*v_rhow.*squeeze(qp_coarse(:,jb,:) + qp_coarse(:,j,:));
             end
             
             
@@ -2681,71 +2261,31 @@ for i_exper = 1:length(exper)
             if calc_advection_tend %If I realy want to calculate the tendency itself
                 % {
                 for k = 1:num_z-1
-                    %                 qp_flux_z_tend_resolved(k,:,:) = - (qp_flux_z_resolved(k+1,:,:) - qp_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
-                    %                 qt_flux_z_tend_resolved(k,:,:) = - (qt_flux_z_resolved(k+1,:,:) - qt_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
                     t_flux_z_tend_resolved(k,:,:) = - (t_flux_z_resolved(k+1,:,:) - t_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
                     tfull_flux_z_tend_resolved(k,:,:) = - (tfull_flux_z_resolved(k+1,:,:) - tfull_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
-                    %                 qp(k,:,:) = qp(k,:,:)  + qpflux_z_tend(k,:,:);
-                    %                 qt(k,:,:) = qt(k,:,:)  + qtflux_z_tend(k,:,:);
-                    %                 t(k,:,:) = t(k,:,:) + tflux_z_tend(k,:,:);
-                    %                 tfull(k,:,:) = tfull(k,:,:) + tfull_flux_z_tend(k,:,:);
-                    %
                 end
                 k = num_z;
-                %             qp_flux_z_tend_resolved(k,:,:) = -(0.0 - qp_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
-                %             qt_flux_z_tend_resolved(k,:,:) = - (0.0 - qt_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
                 t_flux_z_tend_resolved(k,:,:) = - (0.0 - t_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
                 tfull_flux_z_tend_resolved(k,:,:) = - (0.0 - tfull_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
-                %             qp(k,:,:) = qp(k,:,:) + qpflux_z_tend(k,:,:);
-                %             qt(k,:,:) = qt(k,:,:)  + qtflux_z_tend(k,:,:);
-                %             t(k,:,:) = t(k,:,:) + tflux_z_tend(k,:,:);
-                %             tfull(k,:,:) = tfull(k,:,:) + tfull_flux_z_tend(k,:,:);
                 
                 for i = 1:num_blocks_x-1
-                    %                 qp_flux_x_tend_resolved(:,:,i) =- (qp_flux_x_resolved(:,:,i+1) - qp_flux_x_resolved(:,:,i))./(dx_coarse.*rhow_num_x);
-                    %                 qt_flux_x_tend_resolved(:,:,i) = - (qt_flux_x_resolved(:,:,i+1) - qt_flux_x_resolved(:,:,i))./(dx_coarse.*rhow_num_x);
                     t_flux_x_tend_resolved(:,:,i) = - (t_flux_x_resolved(:,:,i+1) - t_flux_x_resolved(:,:,i))./(dx_coarse.*rhow_num_x);
                     tfull_flux_x_tend_resolved(:,:,i) =  - (tfull_flux_x_resolved(:,:,i+1) - tfull_flux_x_resolved(:,:,i))./(dx_coarse.*rhow_num_x);
-                    %                 qp(:,:,i) = qp(:,:,i) + qpflux_x_tend(:,:,i);
-                    %                 qt(:,:,i) = qt(:,:,i)  + qtflux_x_tend(:,:,i);
-                    %                 t(:,:,i) = t(:,:,i) + tflux_x_tend(:,:,i);
-                    %                 tfull(:,:,i) = tfull(:,:,i) + tfull_flux_x_tend(:,:,i);
                 end
                 i = num_blocks_x;
-                %             qp_flux_x_tend_resolved(:,:,i) = -(qp_flux_x_resolved(:,:,1) - qp_flux_x_resolved(:,:,num_blocks_x))./(dx_coarse.*rhow_num_x);
-                %             qt_flux_x_tend_resolved(:,:,i) = -(qt_flux_x_resolved(:,:,1) - qt_flux_x_resolved(:,:,num_blocks_x))./(dx_coarse.*rhow_num_x);
                 t_flux_x_tend_resolved(:,:,i) = - (t_flux_x_resolved(:,:,1) - t_flux_x_resolved(:,:,i))./(dx_coarse.*rhow_num_x);
                 tfull_flux_x_tend_resolved(:,:,i) = - (tfull_flux_x_resolved(:,:,1) - tfull_flux_x_resolved(:,:,i))./(dx_coarse.*rhow_num_x);
-                %             qp(:,:,num_x) = qp(:,:,num_x) + qpflux_x_tend(:,:,i);  % This implies periodic boundary conditions. Should verify!
-                %             qt(:,:,num_x) = qt(:,:,num_x) + qtflux_x_tend(:,:,i); % This implies periodic boundary conditions. Should verify!
-                %             t(:,:,i) = t(:,:,i) + tflux_x_tend(:,:,i);
-                %             tfull(:,:,i) = tfull(:,:,i) + tfull_flux_x_tend(:,:,i);
                 
                 for j = 1:num_blocks_y-1
-                    %                 qp_flux_y_tend_resolved(:,j,:) = - squeeze(qp_flux_y_resolved(:,j+1,:) - qp_flux_y_resolved(:,j,:))./(dy_coarse.*rhow_num_y);
-                    %                 qt_flux_y_tend_resolved(:,j,:) = - squeeze(qt_flux_y_resolved(:,j+1,:) - qt_flux_y_resolved(:,j,:))./(dy_coarse.*rhow_num_y);
                     t_flux_y_tend_resolved(:,j,:) = - squeeze(t_flux_y_resolved(:,j+1,:) - t_flux_y_resolved(:,j,:))./(dy_coarse.*rhow_num_y);
                     tfull_flux_y_tend_resolved(:,j,:) = - squeeze(tfull_flux_y_resolved(:,j+1,:) - tfull_flux_y_resolved(:,j,:))./(dy_coarse.*rhow_num_y);
-                    %                 qp(:,j,:) = squeeze(qp(:,j,:)) + squeeze(qpflux_y_tend(:,j,:));
-                    %                 qt(:,j,:) = squeeze(qt(:,j,:)) + squeeze(qtflux_y_tend(:,j,:));
-                    %                 t(:,j,:) = squeeze(t(:,j,:)) + squeeze(tflux_y_tend(:,j,:));
-                    %                 tfull(:,j,:) = squeeze(tfull(:,j,:)) + squeeze(tfull_flux_y_tend(:,j,:));
-                    %
                 end
                 j = num_blocks_y;
-                %             qp_flux_y_tend_resolved(:,j,:) = -(0.0 - squeeze(qp_flux_y_resolved(:,num_blocks_y,:)))./(dy_coarse.*rhow_num_y); % This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
-                %             qt_flux_y_tend_resolved(:,j,:) = -(0.0 - squeeze(qt_flux_y_resolved(:,num_blocks_y,:)))./(dy_coarse.*rhow_num_y);
                 t_flux_y_tend_resolved(:,j,:) = -(0.0 - squeeze(t_flux_y_resolved(:,num_blocks_y,:)))./(dy_coarse.*rhow_num_y);
                 tfull_flux_y_tend_resolved(:,j,:) =-(0.0 - squeeze(tfull_flux_y_resolved(:,num_blocks_y,:)))./(dy_coarse.*rhow_num_y);
-                %             qp(:,num_y,:) = squeeze(qp(:,num_y,:))+ squeeze(qpflux_y_tend(:,j,:));
-                %             qt(:,num_y,:) = squeeze(qt(:,num_y,:)) + squeeze(qtflux_y_tend(:,j,:)); % This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
-                %             t(:,num_y,:) = squeeze(t(:,num_y,:))+ squeeze(tflux_y_tend(:,j,:));% This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
-                %             tfull(:,num_y,:) = squeeze(tfull(:,num_y,:)) +  squeeze(tfull_flux_y_tend(:,j,:)); % This implies a wall in the NH (I am not sure why there would be this assymetry between hemispheres
                 
                 
                 if advect_fields
-                    %                 qp_coarse = qp_coarse + (qp_flux_x_tend_resolved + qp_flux_y_tend_resolved + qp_flux_z_tend_resolved)*dtn;
-                    %                 qt_coarse = qt_coarse + (qt_flux_x_tend_resolved + qt_flux_y_tend_resolved + qt_flux_z_tend_resolved)*dtn;
                     t_coarse = t_coarse + (t_flux_x_tend_resolved + t_flux_y_tend_resolved + t_flux_z_tend_resolved)*dtn;
                     tfull_coarse = tfull_coarse + (tfull_flux_x_tend_resolved + tfull_flux_y_tend_resolved + tfull_flux_z_tend_resolved)*dtn;
                 end
@@ -2763,11 +2303,6 @@ for i_exper = 1:length(exper)
             end
             
             
-            % For some reason I can get negative qp values. I therefore remove these
-            % negative values.
-            %         sprintf('the coarse minimum qt, qp are:')
-            %         min(min(min(qt_coarse)))
-            %         min(min(min(qp_coarse)))
             
             qp_coarse = max(0,qp_coarse); % It is possible that due to the approximate advection scheme I use I have errors that lead to negative qp values
             qt_coarse = max(0,qt_coarse);
@@ -2790,15 +2325,15 @@ for i_exper = 1:length(exper)
             
             [dqp_fall_resolved,t_fall_tend_resolved,precip_resolved]= ...
                 precip_fall(qp_coarse,tabs_coarse,rho,rhow,rhofac,num_blocks_x,num_blocks_y,num_z,dz,adz,dtn,tprmin,a_pr,fac_fus,...
-                fac_cond,crain,vrain,tgrmin,a_gr,qp_threshold,vgrau,cgrau,vsnow,csnow);%,do_fall_tend_qp,do_fall_tend_tfull);
+                fac_cond,crain,vrain,tgrmin,a_gr,qp_threshold,vgrau,cgrau,vsnow,csnow);
             
-            precip_energy_resolved = precip_resolved.*(fac_cond+(1.-omp_3d_coarse).*fac_fus); %I need to consider to recalc omp_3d due to changes in tabs
+            precip_energy_resolved = precip_resolved.*(fac_cond+(1.-omp_3d_coarse).*fac_fus); 
             
             if do_fall_tend_tfull
-                tfull_coarse = tfull_coarse + t_fall_tend_resolved; % I found that it is better not to change
+                tfull_coarse = tfull_coarse + t_fall_tend_resolved; 
                 qp_coarse = qp_coarse + dqp_fall_resolved;
             end
-            dqp_fall_resolved = dqp_fall_resolved./dtn; %(all the tendencies are devided by dtn - and multiplied in the RF in SAMSON).
+            dqp_fall_resolved = dqp_fall_resolved./dtn; 
             t_fall_tend_resolved = t_fall_tend_resolved./dtn;
             
             
@@ -2860,11 +2395,6 @@ for i_exper = 1:length(exper)
                     fluxbtfull(j,i) = -cd*windspeed*deltfull*wrk;
                     fluxbqt(j,i) = -cd*windspeed*delqt*wrk;
                     windspeed_resolved(j,i) = windspeed;
-                    %Adding calculation for wind surface fluxes (I need to
-                    %think if I want to introduce the error that SAM had in the
-                    %wind surface fluxes.) in theory I can correct only the
-                    %wind amplitude (though it is not the same for the wind
-                    %flux... Decited to calculate the correct values... 
                     ubot=resc_fact_res_2_1min .* u_coarse(1,j,i) + resc_fact_res_2 * u_coarse(1,j,ic);
                     vbot = (fact1_uv .*v_coarse(1,j,i) + fact1_uv.*v_coarse(1,jc,i) + fact1_uv_min.*v_coarse(1,jc,ib) + fact1_uv_min.*v_coarse(1,j,ib));
                     windspeed=sqrt(ubot^2+vbot^2+umin^2);
@@ -2903,13 +2433,12 @@ for i_exper = 1:length(exper)
                 rhoi = rhow(kc)/adzw(kc);
                 for i=1:num_blocks_x
                     for j=1:num_blocks_y
-                        tkh_z=rdz5*(tkz_out_resolved(k,j,i)*Pr1_resolved(k,j,i)+tkz_out_resolved(kc,j,i)*Pr1_resolved(kc,j,i)); %Remember that this is not accurate since we couldn't calculate accurately tkz/tke for the time step
+                        tkh_z=rdz5*(tkz_out_resolved(k,j,i)*Pr1_resolved(k,j,i)+tkz_out_resolved(kc,j,i)*Pr1_resolved(kc,j,i)); 
                         t_diff_flx_z_resolved(kc,j,i)=-tkh_z*(t_coarse(kc,j,i)-t_coarse(k,j,i))*rhoi/ravefactor;
                         tfull_diff_flx_z_resolved(kc,j,i)=-tkh_z*(tfull_coarse(kc,j,i)-tfull_coarse(k,j,i))*rhoi/ravefactor;
                         qt_diff_flx_z_resolved(kc,j,i)=-tkh_z*(qt_coarse(kc,j,i)-qt_coarse(k,j,i))*rhoi/ravefactor;
                         qp_diff_flx_z_resolved(kc,j,i)=-tkh_z*(qp_coarse(kc,j,i)-qp_coarse(k,j,i))*rhoi/ravefactor;
                         
-                        %                         tkz_out_resolved(k,j,i) = tkz_out_resolved(k,j,i); %Yani added...
                         
                     end
                 end
@@ -2955,9 +2484,9 @@ for i_exper = 1:length(exper)
                 %Horizontal diffusion
                 rdx2=1./(dx_coarse*dx_coarse);
                 rdy2=1./(dy_coarse*dy_coarse);
-                tkh_xy = tkz_out_resolved; %they are the same in the configuration we run
-                rdx5=0.5*rdx2;%  * grdf_x(k)= 1 in setgrid so I omit it;
-                rdy5=0.5*rdy2;%  * grdf_y(k)  = 1 in setgrid so I omit it;
+                tkh_xy = tkz_out_resolved; 
+                rdx5=0.5*rdx2;
+                rdy5=0.5*rdy2;
                 
                 % x diffusion
                 for k=1:num_z
@@ -3130,108 +2659,6 @@ for i_exper = 1:length(exper)
     num_blocks_x, num_blocks_y, qn_coarse, qt_coarse, qp_coarse, tfull_coarse, gamaz, pres);
     
         
-%             an = 1./(tbgmax-tbgmin) ;
-%             bn = tbgmin * an;
-%             ap = 1./(tprmax-tprmin) ;
-%             bp = tprmin * ap;
-%             fac1 = fac_cond+(1+bp)*fac_fus;
-%             fac2 = fac_fus*ap;
-%             ag = 1./(tgrmax-tgrmin);
-%             kmax=0;
-%             kmin=num_z+1;
-%             
-%             for i=1:num_blocks_x
-%                 for j=1:num_blocks_y
-%                     for k=1:num_z
-%                         qn_coarse0 = qn_coarse(k,j,i);
-%                         qt_coarse(k,j,i)=max(0.,qt_coarse(k,j,i));
-%                         
-%                         %             ! Initail guess for temperature assuming no cloud water/ice:
-%                         tabs_coarse(k,j,i) = tfull_coarse(k,j,i)-gamaz(k); % Yani - modified to tfull.
-%                         tabs1=(tabs_coarse(k,j,i)+fac1*qp_coarse(k,j,i))/(1.+fac2*qp_coarse(k,j,i));
-%                         
-%                         %             ! Warm cloud:
-%                         
-%                         if(tabs1 >= tbgmax)
-%                             
-%                             tabs1=tabs_coarse(k,j,i)+fac_cond*qp_coarse(k,j,i);
-%                             qsat = qsatw(tabs1,pres(k));
-%                             
-%                             %                 ! Ice cloud:
-%                             
-%                         elseif(tabs1 <= tbgmin)
-%                             
-%                             tabs1=tabs_coarse(k,j,i)+fac_sub*qp_coarse(k,j,i);
-%                             qsat = qsati(tabs1,pres(k));
-%                             
-%                             %                 ! Mixed-phase cloud:
-%                             
-%                         else
-%                             
-%                             om = an*tabs1-bn;
-%                             qsat = om*qsatw(tabs1,pres(k))+(1.-om)*qsati(tabs1,pres(k));
-%                             
-%                         end
-%                         
-%                         
-%                         if(qt_coarse(k,j,i) > qsat)
-%                             
-%                             niter=0;
-%                             dtabs = 100.;
-%                             while(abs(dtabs)>0.01 && niter < 10)
-%                                 if(tabs1>=tbgmax)
-%                                     om=1.;
-%                                     lstarn=fac_cond;
-%                                     dlstarn=0.;
-%                                     qsat=qsatw(tabs1,pres(k));
-%                                     dqsat=dtqsatw(tabs1,pres(k));
-%                                 elseif(tabs1<=tbgmin)
-%                                     om=0.;
-%                                     lstarn=fac_sub;
-%                                     dlstarn=0.;
-%                                     qsat=qsati(tabs1,pres(k));
-%                                     dqsat=dtqsati(tabs1,pres(k));
-%                                 else
-%                                     om=an*tabs1-bn;
-%                                     lstarn=fac_cond+(1.-om)*fac_fus;
-%                                     dlstarn=an;
-%                                     qsat=om*qsatw(tabs1,pres(k))+(1.-om)*qsati(tabs1,pres(k));
-%                                     dqsat=om*dtqsatw(tabs1,pres(k))+(1.-om)*dtqsati(tabs1,pres(k));
-%                                 end
-%                                 if(tabs1>=tprmax)
-%                                     omp=1.;
-%                                     lstarp=fac_cond;
-%                                     dlstarp=0.;
-%                                 elseif(tabs1<=tprmin)
-%                                     omp=0.;
-%                                     lstarp=fac_sub;
-%                                     dlstarp=0.;
-%                                 else
-%                                     omp=ap*tabs1-bp;
-%                                     lstarp=fac_cond+(1.-omp)*fac_fus;
-%                                     dlstarp=ap;
-%                                 end
-%                                 fff = tabs_coarse(k,j,i)-tabs1+lstarn*(qt_coarse(k,j,i)-qsat)+lstarp*qp_coarse(k,j,i);
-%                                 dfff=dlstarn*(qt_coarse(k,j,i)-qsat)+dlstarp*qp_coarse(k,j,i)-lstarn*dqsat-1.;
-%                                 dtabs=-fff/dfff;
-%                                 niter=niter+1;
-%                                 tabs1=tabs1+dtabs;
-%                             end
-%                             qsat = qsat + dqsat * dtabs;
-%                             qn_coarse(k,j,i) = max(0.,qt_coarse(k,j,i)-qsat);
-%                         else
-%                             qn_coarse(k,j,i) = 0.;
-%                         end
-%                         tabs_coarse(k,j,i) = tabs1;
-%                         qp_coarse(k,j,i) = max(0.,qp_coarse(k,j,i)); %! just in case
-%                         
-%                         if(qn_coarse(k,j,i)>qp_threshold)
-%                             kmin = min(kmin,k);
-%                             kmax = max(kmax,k);
-%                         end
-%                     end
-%                 end
-%             end
             
             if do_sedimentation
                 % Sedimentation of ice and water:
@@ -3242,8 +2669,6 @@ for i_exper = 1:length(exper)
                     tlatqi(k) = 0.;
                 end
                 
-                %                 fz_resolved = zeros(size(tabs_coarse)); %Yani - this is not the accurate dimension - check if important
-                %                 fzt_resolved = zeros(size(tabs_coarse)); %Yani - this is not the accurate dimension
                 coef_cl = 1.19e8*(3./(4.*3.1415*1000.*Nc0*1.e6))^(2./3.)*exp(5.*log(1.5)^2);
                 
                 for k = max(1,kmin-1):kmax
@@ -3464,16 +2889,9 @@ for i_exper = 1:length(exper)
             %%
             % Step 03:13: calculate rh in the end of the time step - for
             % coarse grained tendencies and the resolved tendencies:
-            %I don't take into account the diffusivity tendencies here (I
-            %am still happy with calculating the diffusivity correction I think)
             
-            % I am afraid to include surface fluxes - how to calculate
-            % precip ? 
-            % (temperature might
             qt_vert_adv_resolved_tend = zeros(size(qt_flux_z_resolved));
-%             qp_vert_adv_resolved_tend = zeros(size(qt_flux_z_resolved));
             qt_vert_adv_coarse_tend = zeros(size(qt_flux_z_resolved));
-%             qp_vert_adv_coarse_tend = zeros(size(qt_flux_z_resolved));
             
             if calc_advection_tend ==0
                 t_flux_z_tend_resolved = zeros(num_z,num_blocks_y,num_blocks_x);
@@ -3483,9 +2901,7 @@ for i_exper = 1:length(exper)
             for k=1:num_z - 1
                 irhoadzdz = 1./(adz(k).*dz.*rho(k));
                 qt_vert_adv_resolved_tend(k,:,:) = -(qt_flux_z_resolved(k+1,:,:) - qt_flux_z_resolved(k,:,:))*irhoadzdz;
-%                 qp_vert_adv_resolved_tend(k,:,:) = - (qp_flux_z_resolved(k+1,:,:) - qp_flux_z_resolved(k,:,:))*iadz(k)*irho(k);
                 qt_vert_adv_coarse_tend(k,:,:) = -(qt_flux_z_coarse(k+1,:,:) - qt_flux_z_coarse(k,:,:))*irhoadzdz;
-%                 qp_vert_adv_coarse_tend(k,:,:) = - (qp_flux_z_coarse(k+1,:,:) - qp_flux_z_coarse(k,:,:))*iadz(k)*irho(k);
 
                 t_flux_z_tend_coarse(k,:,:) = - (t_flux_z_coarse(k+1,:,:) - t_flux_z_coarse(k,:,:))./(adz(k).*dz.*rho(k));
                 t_flux_z_tend_resolved(k,:,:) = - (tfull_flux_z_resolved(k+1,:,:) - tfull_flux_z_resolved(k,:,:))./(adz(k).*dz.*rho(k));
@@ -3499,13 +2915,8 @@ for i_exper = 1:length(exper)
             t_flux_z_tend_resolved(k,:,:) = - (0.0 - t_flux_z_resolved(k,:,:)).*irhoadzdz;
             
             
-%           qtflux_diff_z[1, :, :] / rho_dz[0]
-%           tflux_diff_z[1, :, :] / rho_dz[0]
-%             omn_3d_coarse  = max(0.,min(1.,(tabs_coarse-tbgmin)*a_bg)); %Note that this is approximated because tabs_coarse is evaluated not at the correct place in code 
-%             fac_dqp_tfull = (fac_cond+(1.-omn_3d_coarse)*fac_fus); % No need to divide by cp because fac_cond and fac_fus are already divided by cp. 
 
-%Note that I assume that QRAD has no effect on qp (sounds right)
-            t_coarse_init_plus_coarse_tend = t_coarse_init + (t_flux_z_tend_coarse + cloud_lat_heat_coarse + Qrad_coarse/86400+ dqp_t_tend_coarse)*dtn; %I multiply by time step because relative humidity is non-linear in prognostic veriables, so I want to calc 24 sec tend of rh and divide by dtn
+            t_coarse_init_plus_coarse_tend = t_coarse_init + (t_flux_z_tend_coarse + cloud_lat_heat_coarse + Qrad_coarse/86400+ dqp_t_tend_coarse)*dtn; 
             t_coarse_init_plus_resolved_tend = t_coarse_init + (t_flux_z_tend_resolved + cloud_lat_heat_resolved)*dtn;
             
             %Note that I don't consider the effect of QRAD on q
@@ -3513,15 +2924,6 @@ for i_exper = 1:length(exper)
             qt_coarse_init_init_plus_coarse_tend = qt_coarse_init + (cloud_qt_tend_coarse - dqp_coarse + qt_vert_adv_coarse_tend)*dtn;
             qt_coarse_init_init_plus_resolved_tend = qt_coarse_init + (cloud_qt_tend_resolved + qt_vert_adv_resolved_tend)*dtn;
             
-%             qp_coarse_init_init_plus_coarse_tend = qp_coarse_init +  (dqp_fall_coarse + dqp_coarse + qp_vert_adv_coarse_tend)*dtn;
-%             qp_coarse_init_init_plus_resolved_tend = qp_coarse_init + (dqp_fall_resolved + qt_vert_adv_resolved_tend)*dtn;
-            
-%             %add surface fluxes ? might be problematic to precipitation ?  
-%             qt_surf_tend_coarse = qt_diff_flx_z_coarse(1,:,:).*irhoadz(1)./dz; %Surface flux tendency
-%             t_surf_tend_coarse = t_diff_flx_z_coarse(1,:,:).*irhoadz(1)./dz; %Surface flux tendency
-%             qt_surf_tend_res = qt_diff_flx_z_resolved(1,:,:).*irhoadz(1)./dz; %Surface flux tendency
-%             t_surf_tend_res = t_diff_flx_z_resolved(1,:,:).*irhoadz(1)./dz; %Surface flux tendency
-%             
             %calculate tabs for the case we propagated with coarse grained
             %high res tendencies
             [~, tabs_resolved_end_coarse, qt_coarse_init_init_plus_coarse_tend, ~,~,~] = update_qn_tabs(tbgmax, tbgmin, tprmax, tprmin, fac_cond, fac_fus, fac_sub, tgrmax, tgrmin, qp_threshold, num_z, ...
@@ -3578,17 +2980,6 @@ for i_exper = 1:length(exper)
                 tfull_flux_z_tend_resolved = tfull_flux_z_tend_coarse - tfull_flux_z_tend_resolved;
                 
                 
-                %             t_flux_x_tend_resolved = t_flux_x_tend_coarse - t_flux_x_tend_resolved;
-                %             t_flux_y_tend_resolved = t_flux_y_tend_coarse - t_flux_y_tend_resolved;
-                %             t_flux_z_tend_resolved = t_flux_z_tend_coarse - t_flux_z_tend_resolved;
-                %
-                %             qt_flux_x_tend_resolved = qt_flux_x_tend_coarse - qt_flux_x_tend_resolved;
-                %             qt_flux_y_tend_resolved = qt_flux_y_tend_coarse - qt_flux_y_tend_resolved;
-                %             qt_flux_z_tend_resolved = qt_flux_z_tend_coarse - qt_flux_z_tend_resolved;
-                %
-                %             qp_flux_x_tend_resolved = qp_flux_x_tend_coarse - qp_flux_x_tend_resolved;
-                %             qp_flux_y_tend_resolved = qp_flux_y_tend_coarse - qp_flux_y_tend_resolved;
-                %             qp_flux_z_tend_resolved = qp_flux_z_tend_coarse - qp_flux_z_tend_resolved;
             end
             %diffusion fluxes and tendencies
             
@@ -3670,8 +3061,6 @@ for i_exper = 1:length(exper)
             v_coarse_flip = permute(v_coarse, perm);
             w_coarse_flip = permute(w_coarse, perm);
             tabs_coarse_flip = permute(tabs_coarse, perm);
-%             tabs_coarse_init_flip = permute(tabs_coarse_init, perm);
-%             tabs_coarse_end_flip = permute(tabs_coarse_end, perm);
             t_coarse_flip = permute(t_coarse, perm);
             tfull_coarse_flip = permute(tfull_coarse, perm);
             tfull_coarse_init_flip = permute(tfull_coarse_init, perm);
@@ -3731,14 +3120,6 @@ for i_exper = 1:length(exper)
                 t_flux_x_tend_resolved_flip = permute(t_flux_x_tend_resolved, perm);
                 t_flux_y_tend_resolved_flip = permute(t_flux_y_tend_resolved, perm);
                 t_flux_z_tend_resolved_flip = permute(t_flux_z_tend_resolved, perm);
-                
-                %             qt_flux_x_tend_resolved_flip = permute(qt_flux_x_tend_resolved, perm);
-                %             qt_flux_y_tend_resolved_flip = permute(qt_flux_y_tend_resolved, perm);
-                %             qt_flux_z_tend_resolved_flip = permute(qt_flux_z_tend_resolved, perm);
-                %
-                %             qp_flux_x_tend_resolved_flip = permute(qp_flux_x_tend_resolved, perm);
-                %             qp_flux_y_tend_resolved_flip = permute(qp_flux_y_tend_resolved, perm);
-                %             qp_flux_z_tend_resolved_flip = permute(qp_flux_z_tend_resolved, perm);
             end
             %diffusion fluxes and tendencies
             
@@ -3864,13 +3245,11 @@ for i_exper = 1:length(exper)
             
             
             
-%                     outfilename = [filename_base, '_diff_coarse_space', num2str(multiple_space), '.nc4'];
                     if is_cheyenne
                         outfilename_janni_final =['/glade/scratch/janniy/ML_convection_data/', exper{i_exper}, '/', exper{i_exper},'km12x576_576x1440x48_ctl_288_', num2str(time_index, '%010d'), '_000', num2str(cycle), '_diff_coarse_space_corrected_tkz', num2str(multiple_space), '.nc4'];
                     else
                         outfilename_janni_final =['/net/aimsir/archive1/janniy/ML_convection_data/', exper{i_exper}, 'km12x576_576x1440x48_ctl_288_', num2str(time_index, '%010d'), '_000', num2str(cycle), '_diff_coarse_space_corrected', num2str(multiple_space), '.nc4'];
                     end
-%             outfilename_janni_final = [outfilename_janni,num2str(multiple_space),'qn_tests_tabs_tests2', '_del.nc4'];
             
             disp(outfilename_janni_final)
             % create netcdf
@@ -3892,10 +3271,7 @@ for i_exper = 1:length(exper)
             w_varid = netcdf.defVar(ncid,'W','NC_FLOAT',[xdimid ydimid zdimid]);
             tabs_varid = netcdf.defVar(ncid,'TABS','NC_FLOAT',[xdimid ydimid zdimid]);
             
-%             tabs_coarse_init_varid = netcdf.defVar(ncid,'TABS_COARSE_INIT','NC_FLOAT',[xdimid ydimid zdimid]);
-%             tabs_coarse_end_varid = netcdf.defVar(ncid,'TABS_COARSE_END','NC_FLOAT',[xdimid ydimid zdimid]);
 
-            %             tkz_out_varid = netcdf.defVar(ncid,'tkz_out','NC_FLOAT',[xdimid ydimid zdimid]);
             t_varid = netcdf.defVar(ncid,'T','NC_FLOAT',[xdimid ydimid zdimid]);
             tfull_varid = netcdf.defVar(ncid,'TFULL','NC_FLOAT',[xdimid ydimid zdimid]);
             tfull_init_varid = netcdf.defVar(ncid,'TFULL_INIT','NC_FLOAT',[xdimid ydimid zdimid]);
@@ -3948,13 +3324,6 @@ for i_exper = 1:length(exper)
                 t_flux_y_tend_resolved_varid = netcdf.defVar(ncid,'T_ADV_TEND_Y','NC_FLOAT',[xdimid ydimid zdimid]);
                 t_flux_z_tend_resolved_varid = netcdf.defVar(ncid,'T_ADV_TEND_Z','NC_FLOAT',[xdimid ydimid zdimid]);
                 
-                %             qt_flux_x_tend_resolved_varid = netcdf.defVar(ncid,'QT_ADV_TEND_X','NC_FLOAT',[xdimid ydimid zdimid]);
-                %             qt_flux_y_tend_resolved_varid = netcdf.defVar(ncid,'QT_ADV_TEND_Y','NC_FLOAT',[xdimid ydimid zdimid]);
-                %             qt_flux_z_tend_resolved_varid = netcdf.defVar(ncid,'QT_ADV_TEND_Z','NC_FLOAT',[xdimid ydimid zdimid]);
-                %
-                %             qp_flux_x_tend_resolved_varid = netcdf.defVar(ncid,'QP_ADV_TEND_X','NC_FLOAT',[xdimid ydimid zdimid]);
-                %             qp_flux_y_tend_resolved_varid = netcdf.defVar(ncid,'QP_ADV_TEND_Y','NC_FLOAT',[xdimid ydimid zdimid]);
-                %             qp_flux_z_tend_resolved_varid = netcdf.defVar(ncid,'QP_ADV_TEND_Z','NC_FLOAT',[xdimid ydimid zdimid]);
             end
             t_diff_flx_x_resolved_varid = netcdf.defVar(ncid,'T_DIFF_FLUX_X','NC_FLOAT',[xdimid ydimid zdimid]);
             t_diff_flx_y_resolved_varid = netcdf.defVar(ncid,'T_DIFF_FLUX_Y','NC_FLOAT',[xdimid ydimid zdimid]);
@@ -4096,9 +3465,6 @@ for i_exper = 1:length(exper)
             netcdf.putAtt(ncid,v_varid,'units','m/s');
             netcdf.putAtt(ncid,w_varid,'units','m/s');
             netcdf.putAtt(ncid,tabs_varid,'units','K');
-%             netcdf.putAtt(ncid,tabs_coarse_init_varid,'units','K');
-%             netcdf.putAtt(ncid,tabs_coarse_end_varid,'units','K');
-            %             netcdf.putAtt(ncid,tkz_out_varid,'units','m^2/s');
             netcdf.putAtt(ncid,t_varid,'units','K');
             netcdf.putAtt(ncid,tfull_varid,'units','K');
             netcdf.putAtt(ncid,tfull_init_varid,'units','K');
@@ -4159,14 +3525,6 @@ for i_exper = 1:length(exper)
                 netcdf.putAtt(ncid,t_flux_x_tend_resolved_varid,'units','K /s');
                 netcdf.putAtt(ncid,t_flux_y_tend_resolved_varid,'units','K /s');
                 netcdf.putAtt(ncid,t_flux_z_tend_resolved_varid,'units','K /s');
-                
-                %             netcdf.putAtt(ncid,qt_flux_x_tend_resolved_varid,'units','gr /s / kg');
-                %             netcdf.putAtt(ncid,qt_flux_y_tend_resolved_varid,'units','gr /s / kg');
-                %             netcdf.putAtt(ncid,qt_flux_z_tend_resolved_varid,'units','gr /s / kg');
-                %
-                %             netcdf.putAtt(ncid,qp_flux_x_tend_resolved_varid,'units','gr /s / kg');
-                %             netcdf.putAtt(ncid,qp_flux_y_tend_resolved_varid,'units','gr /s / kg');
-                %             netcdf.putAtt(ncid,qp_flux_z_tend_resolved_varid,'units','gr /s / kg');
             end
             %diffusion
             netcdf.putAtt(ncid,tfull_diff_flx_x_resolved_varid,'units','K*m /s');
@@ -4255,10 +3613,6 @@ for i_exper = 1:length(exper)
             netcdf.putAtt(ncid,Pr1_resolved_varid,'units','Number -none');
             netcdf.putAtt(ncid,Pr1_coarse_varid,'units','Number -none');
             
-            %         netcdf.putAtt(ncid,tflux_diff_varid,'units','K kg/m^2/s');
-            %         netcdf.putAtt(ncid,tfull_flux_diff_varid,'units','K kg/m^2/s');
-            %         netcdf.putAtt(ncid,qtflux_diff_varid,'units','g/m^2/s');
-            %         netcdf.putAtt(ncid,qpflux_diff_varid,'units','g/m^2/s');
             
             netcdf.putAtt(ncid,dqp_varid,'units','g/kg/s');
             netcdf.putAtt(ncid,dqp_resolved_varid,'units','g/kg/s');
@@ -4277,20 +3631,20 @@ for i_exper = 1:length(exper)
             netcdf.putAtt(ncid,dwdt_advect_resolved_varid,'units','m/s^2');
             
               %Momentum Surface wind fluxes
-              netcdf.putAtt(ncid,fluxbv_coarse_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
-              netcdf.putAtt(ncid,fluxbu_coarse_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
-              netcdf.putAtt(ncid,fluxbv_resolved_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
-              netcdf.putAtt(ncid,fluxbu_resolved_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
+              netcdf.putAtt(ncid,fluxbv_coarse_varid,'units','m/s^2 * kg/m^3?');  
+              netcdf.putAtt(ncid,fluxbu_coarse_varid,'units','m/s^2 * kg/m^3?');  
+              netcdf.putAtt(ncid,fluxbv_resolved_varid,'units','m/s^2 * kg/m^3?');  
+              netcdf.putAtt(ncid,fluxbu_resolved_varid,'units','m/s^2 * kg/m^3?');  
               
-              netcdf.putAtt(ncid,fluxbv_samson_coarse_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
-              netcdf.putAtt(ncid,fluxbu_samson_coarse_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
-              netcdf.putAtt(ncid,fluxbv_samson_resolved_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
-              netcdf.putAtt(ncid,fluxbu_samson_resolved_varid,'units','m/s^2 * kg/m^3?');  %I think that we only need to still divide by rho ? 
+              netcdf.putAtt(ncid,fluxbv_samson_coarse_varid,'units','m/s^2 * kg/m^3?');  
+              netcdf.putAtt(ncid,fluxbu_samson_coarse_varid,'units','m/s^2 * kg/m^3?');  
+              netcdf.putAtt(ncid,fluxbv_samson_resolved_varid,'units','m/s^2 * kg/m^3?');  
+              netcdf.putAtt(ncid,fluxbu_samson_resolved_varid,'units','m/s^2 * kg/m^3?');  
                             
 %             % change place? 
               % The direct calculation of DQP on T (HL) 
-              netcdf.putAtt(ncid,dqp_t_tend_resolved_varid,'units','K/s');  %I think that we only need to still divide by rho ? 
-              netcdf.putAtt(ncid,dqp_t_tend_coarse_varid,'units','K/s');  %I think that we only need to still divide by rho ? 
+              netcdf.putAtt(ncid,dqp_t_tend_resolved_varid,'units','K/s');  
+              netcdf.putAtt(ncid,dqp_t_tend_coarse_varid,'units','K/s');  
               %Generalization
               netcdf.putAtt(ncid,rh_init_varid,'units','percent'); 
               netcdf.putAtt(ncid,rh_end_resolved_varid,'units','percent'); 
@@ -4298,7 +3652,6 @@ for i_exper = 1:length(exper)
               netcdf.putAtt(ncid,tabs_resolved_end_resolved_varid,'units','K'); 
               netcdf.putAtt(ncid,tabs_resolved_end_coarse_varid,'units','K'); 
              
-            % leave define mode and enter data mode
             netcdf.endDef(ncid);
             
             % write data
@@ -4312,9 +3665,6 @@ for i_exper = 1:length(exper)
             netcdf.putVar(ncid,v_varid,v_coarse_flip);
             netcdf.putVar(ncid,w_varid,w_coarse_flip);
             netcdf.putVar(ncid,tabs_varid,tabs_coarse_flip);
-%             netcdf.putVar(ncid,tabs_coarse_init_varid,tabs_coarse_init_flip);
-%             netcdf.putVar(ncid,tabs_coarse_end_varid,tabs_coarse_end_flip);
-            %             netcdf.putVar(ncid,tkz_out_varid,tkz_out_coarse_flip);
             netcdf.putVar(ncid,t_varid,t_coarse_flip);
             netcdf.putVar(ncid,tfull_varid,tfull_coarse_flip);
             netcdf.putVar(ncid,tfull_init_varid,tfull_coarse_init_flip);
@@ -4381,13 +3731,6 @@ for i_exper = 1:length(exper)
                 netcdf.putVar(ncid,t_flux_y_tend_resolved_varid,t_flux_y_tend_resolved_flip);
                 netcdf.putVar(ncid,t_flux_z_tend_resolved_varid,t_flux_z_tend_resolved_flip);
                 
-                %             netcdf.putVar(ncid,qt_flux_x_tend_resolved_varid,qt_flux_x_tend_resolved_flip*1000.0);
-                %             netcdf.putVar(ncid,qt_flux_y_tend_resolved_varid,qt_flux_y_tend_resolved_flip*1000.0);
-                %             netcdf.putVar(ncid,qt_flux_z_tend_resolved_varid,qt_flux_z_tend_resolved_flip*1000.0);
-                %
-                %             netcdf.putVar(ncid,qp_flux_x_tend_resolved_varid,qp_flux_x_tend_resolved_flip*1000.0);
-                %             netcdf.putVar(ncid,qp_flux_y_tend_resolved_varid,qp_flux_y_tend_resolved_flip*1000.0);
-                %             netcdf.putVar(ncid,qp_flux_z_tend_resolved_varid,qp_flux_z_tend_resolved_flip*1000.0);
             end
             %diffusion fluxes and tendencies
             netcdf.putVar(ncid,tfull_diff_flx_x_resolved_varid,tfull_diff_flx_x_resolved_flip);
@@ -4524,250 +3867,8 @@ for i_exper = 1:length(exper)
 end
 
 
-%{
-
-    vert_levels =1;
-    mean_dims=1;
-    fig_num = 110;
-if (is_test == 1 && plot_plots == 1)
-    vert_levels =1;
-    mean_dims=1;
-    fig_num = 110;
-    if compare_advection_t_flux
-        plot_contour_validation(fig_num,dummy11*dz,tfull_flux_z_resolved*dtn,tfull_flux_z*dtn,mean_dims,'tfull z advection',vert_levels)
-    end
-    fig_num = fig_num +1;
-    if compare_advection_t_flux_z
-        plot_contour_validation(fig_num,dummy22,tfull_flux_z_tend_resolved*dtn,tfull_flux_z_tend*dtn,mean_dims,'tfull z advection tendency',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_t_x_tend
-        plot_contour_validation(fig_num,dummy44,tfull_flux_x_tend_resolved*dtn,tfull_flux_x_tend*dtn,1,'tfull x advection tendency',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_t_flux_x
-        plot_contour_validation(fig_num,dummy33*dx,tfull_flux_x_resolved*dtn,tfull_flux_x*dtn,mean_dims,'tfull x advection tendency',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_t_x_tend
-        plot_contour_validation(fig_num,y_tend_adv,tfull_flux_y_tend_resolved*dtn,tfull_flux_y_tend*dtn,mean_dims,'tfull y advection tendency',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_t_flux_y
-        plot_contour_validation(fig_num,y_flux_adv*dy,tfull_flux_y_resolved*dtn,tfull_flux_y*dtn,mean_dims,'tfull y advection flux',vert_levels)
-    end
-    fig_num = fig_num +1;
-    if dqp_fall_tendencies == 1
-        plot_contour_validation(fig_num,dummy55,dqp_fall_resolved*dtn,dqp_fall*dtn,mean_dims,'dqp fall',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if t_fall_tendencies == 1
-        plot_contour_validation(fig_num,dummy100,t_fall_tend_resolved*dtn,t_fall_tend*dtn,mean_dims,'tfull fall tend',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if t_diff_plot == 1
-        plot_contour_validation(fig_num,t_diff_flux*dz,tfull_diff_flx_z_resolved,tfull_diff_flx_z,mean_dims,'tfull diff z flux',vert_levels)
-        %10% error I don't remember this was the error. Changing to tkz_i reduces only to 5%.
-        %Something is wrong again?!?!? ACTUALLY USING tkh_z = dummy155(k,j,i); WHICH IS THE CURRENT VALUE
-        % AND PR1 VALUE REDUCES THE ERROR TO less than 1% PERCENT.
-        %The error comes from the fact that we need to calculate tke using
-        %values from current step rather than previous step (this causes a miss
-        %estimation of tkz). Using tkz from the end of time step, fixes this
-        %problem (try not switching the values of tkz and tkz_i and the error reduces significantly!)
-        % furthermore - additional error comes from wrong calculation of def2
-    end
-    
-    fig_num = fig_num +1;
-    if t_z_diff_tend_plot == 1
-        plot_contour_validation(fig_num,t_diff_tend,tfull_diff_z_tend_resolved,tfull_diff_z_tend*dtn,mean_dims,'tfull diff z tend',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if do_compare_tkz_vs_approx
-        plot_contour_validation(fig_num,tkz_i,tkz,tkz,mean_dims,'tkz',vert_levels)
-        fig_num = fig_num +1;
-        plot_contour_validation(fig_num,tkz,tkz_coarse,tkz_coarse,mean_dims,'tkz from iterations',vert_levels)
-    end
-    
-    fig_num = fig_num +1;
-    
-%     if do_approx_tke_vs_real
-%         plot_contour_validation(fig_num,tke_i,tke_approx_coarse,tke_approx,mean_dims,'tke',vert_levels)
-%     end
-%     fig_num = fig_num +1;
-    
-    if def2_compare % there is about 3% error in the scale
-        plot_contour_validation(fig_num,dummy144,def2,def2,mean_dims,'def2',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_x_diffusion % Has 10% error. comes from tkz (has 2-3% error) and tfull (although small error, somehow important)
-        plot_contour_validation(fig_num,dummy166,tfull_diff_flx_x_resolved./dx,tfull_diff_flx_x./dx,mean_dims,'tfull x diff',vert_levels)
-    end
-%             plot_contour_validation(fig_num,dummy166,tfull_diff_flx_x_resolved,tfull_diff_flx_x,3,'tfull x diff',1:48)
-
-    fig_num = fig_num +1;
-    if compare_y_diffusion %less than 20% error. probably because of tkz.
-        plot_contour_validation(fig_num,dummy188,tfull_diff_flx_y_resolved./dy,tfull_diff_flx_y./dy,mean_dims,'tfull y diff',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    
-    if compare_x_diffusion_tend % Has 10% error. comes from tkz (has 2-3% error) and tfull (although small error, somehow important)
-        plot_contour_validation(fig_num,dummy177,tfull_diff_x_tend_resolved,tfull_diff_x_tend,1,'tfull x diff tend',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_y_diffusion_tend % Has 10% error. comes from tkz (has 2-3% error) and tfull (although small error, somehow important)
-        plot_contour_validation(fig_num,dummy199,tfull_diff_y_tend_resolved,tfull_diff_y_tend,mean_dims,'tfull y diff tend',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if plot_dqp_mic_tend
-        dqp2 = dqp;
-        dqp_test2 = dqp_test;
-        plot_contour_validation(fig_num,dqp_test2,dqp_resolved*dtn,dqp2*dtn,mean_dims,'dqp',vert_levels)
-    end
-    fig_num = fig_num +1;
-    x_coord = 3:30;
-    y_coord = 3:80;
-    if compare_qp_total_advection_tendency %accurate only if we use the full advection scheme tendency
-        var1 = qp_x_tend_adv + qp_y_tend_adv + qp_z_tend_adv;
-        var2 = dummy211 - dummy200;
-        plot_contour_validation(fig_num,var1(:,y_coord,x_coord),(qp_adv_tend_resolved(:,y_coord,x_coord)-qp_adv_tend(:,y_coord,x_coord)).*dtn,qp_adv_tend(:,y_coord,x_coord).*dtn,mean_dims,'qp tot adv tend ',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_qt_total_advection_tendency %Consistency check - all fortran output
-        var1 = qt_x_tend_adv + qt_y_tend_adv + qt_z_tend_adv;
-        plot_contour_validation(fig_num,var1(:,y_coord,x_coord),(qt_adv_tend_resolved(:,y_coord,x_coord)-qt_adv_tend(:,y_coord,x_coord)).*dtn,qt_adv_tend(:,y_coord,x_coord).*dtn,mean_dims,'qt tot adv tend ',vert_levels)
-    end
-    
-    fig_num = fig_num +1;
-    
-    if compare_advection_qp_flux_y
-        plot_contour_validation(fig_num,qp_y_flux_adv(:,y_coord,x_coord),qp_flux_y_resolved(:,y_coord,x_coord).*dtn./dy,qp_flux_y(:,y_coord,x_coord).*dtn./dy,mean_dims,'qp y adv flux',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_qp_flux_x
-        plot_contour_validation(fig_num,qp_x_flux_adv(:,y_coord,x_coord),qp_flux_x_resolved(:,y_coord,x_coord).*dtn./dx,qp_flux_x(:,y_coord,x_coord).*dtn./dx,mean_dims,'qp x adv flux',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_qp_flux_z
-        plot_contour_validation(fig_num,qp_z_flux_adv(:,y_coord,x_coord),qp_flux_z_resolved(:,y_coord,x_coord).*dtn./dz,qp_flux_z(:,y_coord,x_coord).*dtn./dz,mean_dims,'qp z adv flux',vert_levels:2)
-%                 plot_contour_validation(fig_num,qp_z_flux_adv(:,3:30,3:30),qp_flux_z(:,3:30,3:30).*dtn,qp_flux_z(:,3:30,3:30).*dtn,mean_dims,'qp z adv flux',vert_levels:2)
-
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_qt_flux_y
-        plot_contour_validation(fig_num,qt_y_flux_adv(:,y_coord,x_coord),qt_flux_y_resolved(:,y_coord,x_coord).*dtn./dy,qt_flux_y(:,y_coord,x_coord).*dtn./dy,mean_dims,'qt y adv flux',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_qt_flux_x % has 10% error if looking at xy plane - because of edge
-        plot_contour_validation(fig_num,qt_x_flux_adv(:,y_coord,x_coord),qt_flux_x_resolved(:,y_coord,x_coord).*dtn./dx,qt_flux_x(:,y_coord,x_coord).*dtn./dx,mean_dims,'qt x adv flux',vert_levels)
-    end
-    fig_num = fig_num +1;
-    
-    if compare_advection_qt_flux_z
-        plot_contour_validation(fig_num,qt_z_flux_adv(:,y_coord,x_coord),qt_flux_z_resolved(:,y_coord,x_coord).*dtn./dz,qt_flux_z(:,y_coord,x_coord).*dtn./dz,mean_dims,'qt z adv flux',1:vert_levels)
-    end
-    
-    
-end
-
-
-sprintf('define plot_coarse_vs_residuals')
-if plot_coarse_vs_residuals
-    fig_num =2001;
-    vert_levels = 2;
-    mean_dims =1;
-    xxxx = 3:30;
-    yyyy= 3:80;
-    plot_contour_validation(fig_num,dqp_coarse,dqp_resolved,dqp_resolved,mean_dims,'coarse dpq',vert_levels)
-    fig_num = fig_num+1;
-    
-    plot_contour_validation(fig_num,tfull_flux_x_coarse,tfull_flux_x_resolved,tfull_flux_x_resolved,mean_dims,'coarse tfull x flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,tfull_flux_y_coarse,tfull_flux_y_resolved,tfull_flux_y_resolved,mean_dims,'coarse tfull y flux flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,tfull_flux_z_coarse,tfull_flux_z_resolved,tfull_flux_z_resolved,mean_dims,'coarse tfull z flux flux',2)
-    fig_num = fig_num+1;
-
-    plot_contour_validation(fig_num,t_flux_x_coarse,t_flux_x_resolved,t_flux_x_resolved,mean_dims,'coarse t x flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,t_flux_y_coarse,t_flux_y_resolved,t_flux_y_resolved,mean_dims,'coarse t y flux flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,t_flux_z_coarse,t_flux_z_resolved,t_flux_z_resolved,mean_dims,'coarse t z flux flux',vert_levels)
-    fig_num = fig_num+1;
-    
-    plot_contour_validation(fig_num,qt_flux_x_coarse,qt_flux_x_resolved,qt_flux_x_resolved,mean_dims,'coarse qt x flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qt_flux_y_coarse,qt_flux_y_resolved,qt_flux_y_resolved,mean_dims,'coarse qt y flux flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qt_flux_z_coarse,qt_flux_z_resolved,qt_flux_z_resolved,mean_dims,'coarse qt z flux flux',vert_levels)
-    fig_num = fig_num+1;
-    
-    plot_contour_validation(fig_num,qp_flux_x_coarse,qp_flux_x_resolved,qp_flux_x_resolved,mean_dims,'coarse qp x flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qp_flux_y_coarse,qp_flux_y_resolved,qp_flux_y_resolved,mean_dims,'coarse qp y flux flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qp_flux_z_coarse,qp_flux_z_resolved,qp_flux_z_resolved,mean_dims,'coarse qp z flux flux',vert_levels+1)
-    fig_num = fig_num+1;
-    
-    plot_contour_validation(fig_num,tfull_diff_flx_x_coarse(:,yyyy,xxxx),tfull_diff_flx_x_resolved(:,yyyy,xxxx),tfull_diff_flx_x_resolved(:,yyyy,xxxx),mean_dims,'coarse tfull x diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,tfull_diff_flx_y_coarse(:,yyyy,xxxx),tfull_diff_flx_y_resolved(:,yyyy,xxxx),tfull_diff_flx_y_resolved(:,yyyy,xxxx),mean_dims,'coarse tfull y diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,tfull_diff_flx_z_coarse(:,yyyy,xxxx),tfull_diff_flx_z_resolved(:,yyyy,xxxx),tfull_diff_flx_z_resolved(:,yyyy,xxxx),mean_dims,'coarse tfull z diff flux',vert_levels)
-    fig_num = fig_num+1;
-    
-     plot_contour_validation(fig_num,t_diff_flx_x_coarse,t_diff_flx_x_resolved,t_diff_flx_x_resolved,mean_dims,'coarse t x diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,t_diff_flx_y_coarse,t_diff_flx_y_resolved,t_diff_flx_y_resolved,mean_dims,'coarse t y diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,t_diff_flx_z_coarse,t_diff_flx_z_resolved,t_diff_flx_z_resolved,mean_dims,'coarse t z diff flux',vert_levels)
-    fig_num = fig_num+1;
-    
-    plot_contour_validation(fig_num,qt_diff_flx_x_coarse,qt_diff_flx_x_resolved,qt_diff_flx_x_resolved,mean_dims,'coarse qt x diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qt_diff_flx_y_coarse,qt_diff_flx_y_resolved,qt_diff_flx_y_resolved,mean_dims,'coarse qt y diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qt_diff_flx_z_coarse,qt_diff_flx_z_resolved,qt_diff_flx_z_resolved,mean_dims,'coarse qt z diff flux',vert_levels)
-    fig_num = fig_num+1;
-    
-%         plot_contour_validation(fig_num,qp_diff_flx_z_coarse(:,:,10:20),qp_diff_flx_z_resolved(:,:,10:20),qp_diff_flx_z_resolved(:,:,10:20),mean_dims,'coarse qp z diff flux',vert_levels)
-        plot_contour_validation(fig_num,qp_diff_flx_x_coarse,qp_diff_flx_x_resolved,qp_diff_flx_x_resolved,mean_dims,'coarse qp x diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qp_diff_flx_y_coarse(:,yyyy,xxxx),qp_diff_flx_y_resolved(:,yyyy,xxxx),qp_diff_flx_y_resolved(:,yyyy,xxxx),mean_dims,'coarse qp y diff flux',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,qp_diff_flx_z_coarse(:,yyyy,xxxx),qp_diff_flx_z_resolved(:,yyyy,xxxx),qp_diff_flx_z_resolved(:,yyyy,xxxx),mean_dims,'coarse qp z diff flux',vert_levels)
-    fig_num = fig_num+1;
-    
-    plot_contour_validation(fig_num,dqp_fall_coarse(:,yyyy,xxxx),dqp_fall_resolved(:,yyyy,xxxx),dqp_fall_resolved(:,yyyy,xxxx),mean_dims,'coarse dqp fall',vert_levels)
-    fig_num = fig_num+1;
-    plot_contour_validation(fig_num,t_fall_tend_coarse(:,yyyy,xxxx),t_fall_tend_resolved(:,yyyy,xxxx),t_fall_tend_resolved(:,yyyy,xxxx),mean_dims,'coarse tfull fall',vert_levels)
-    fig_num = fig_num+1;
-    
-        plot_contour_validation(fig_num,cloud_lat_heat_coarse,cloud_lat_heat_resolved,cloud_lat_heat_resolved,mean_dims,'coarse cloud lat heat',vert_levels)
-    fig_num = fig_num+1;
-
-            plot_contour_validation(fig_num,cloud_qt_tend_coarse(:,yyyy,xxxx),cloud_qt_tend_resolved(:,yyyy,xxxx),cloud_qt_tend_resolved(:,yyyy,xxxx),3,'qt cloud ',1:48)
-    fig_num = fig_num+1;
             
     
-end
-
-%}
 
 function [var1,var2] = switch_vars(var1,var2)
 tmp = var1;
@@ -4775,30 +3876,3 @@ var1 = var2;
 var2 = tmp;
 end
 
-%
-% function out = andiff(x1,x2,a,b)
-% out = (abs(a)-a*a*b)*0.5*(x2-x1);
-% end
-%
-% function out = across(x1,a1,a2)
-% out =0.03125*a1*a2*x1;
-% end
-% function out = pp(y)
-% out = max(0.,y);
-% end
-% function out = pn(y)
-% out =-min(0.,y);
-% end
-% %
-%  fig_num = fig_num+1;
-%   plot_contour_validation(fig_num,def2_coarse2(:,yyyy,xxxx),def2_coarse(:,yyyy,xxxx),def2_coarse(:,yyyy,xxxx),1,'def2',10)
-%   fig_num = fig_num+1;
-%   plot_contour_validation(fexig_num,tkz_coarse2(:,yyyy,xxxx),tkz_coarse(:,yyyy,xxxx),tkz_coarse(:,yyyy,xxxx),1,'tkz ',10)
-%
-%
-%
-%  fig_num = fig_num+1;
-%   plot_contour_validation(fig_num,def2_coarse2(:,yyyy,xxxx),def2_coarse(:,yyyy,xxxx),def2_coarse(:,yyyy,xxxx),3,'def2',1:48)
-%   fig_num = fig_num+1;
-%   plot_contour_validation(fig_num,tkz_coarse2(:,yyyy,xxxx),tkz_coarse(:,yyyy,xxxx),tkz_coarse(:,yyyy,xxxx),3,'tkz ',1:48)
-%}
