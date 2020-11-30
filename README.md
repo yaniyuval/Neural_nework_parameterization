@@ -4,7 +4,7 @@ Here we have the code and processed data from simulations and neural network par
 
 ### code
 The code is divided to three main directories:
-1. sam_code_NN: Fortran code with all changes done to SAM used in the simulations (except for the reduced precision simulations).
+1. sam_code_NN: Fortran code with all changes done to SAM used in the simulations. 
    - The subdirectory sam_cases contains the namelist (prm), the main.f90 file and neural network subroutines (nn_convection_flux.f90, nn_diffusion.f90) for the runs used in the manuscript. The subdirectories in this directory have the naming convections:
     - run_files_x8_N_layers for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (N layers) simulation
     - run_files_N_missing_bits_out_in_only for data from the x8-NN simulation (96km grid spacing with NN parameterization) with neural-network parameterization (5 layers) simulation with 23-N bits in the mantissa
