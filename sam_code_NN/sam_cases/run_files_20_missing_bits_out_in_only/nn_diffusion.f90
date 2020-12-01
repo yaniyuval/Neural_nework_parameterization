@@ -421,6 +421,7 @@ character(len=256) :: nn_filename
 ! bits 23-30 are exponent
 ! bits 0-22 are the mantissa, least significant bits are 0-7.
 
+!round x down
    do ib=0,nt
     itemp = ibclr(itemp,ib) ! bit to zero
    enddo
@@ -438,7 +439,7 @@ character(len=256) :: nn_filename
     endif
   enddo
 
-  if (abs(temp2 -x) < abs(temp-x)) then
+  if (abs(temp2 -x) < abs(temp-x)) then !tie breaking rule -> round toward zero 
    x = temp2
   else
    x = temp
