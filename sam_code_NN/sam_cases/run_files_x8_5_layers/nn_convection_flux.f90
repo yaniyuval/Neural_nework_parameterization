@@ -358,7 +358,6 @@ character(len=256) :: nn_filename
         t_flux_adv(1) = 0.0 
         q_flux_adv(1) = 0.0
         
-!!! Since the flux is on half levels I do not know if we should bound the flux         
         do k=2,nrf
          if (q_flux_adv(k).lt.0) then          
           if ( q(i,j,k).lt.-q_flux_adv(k)* irhoadzdz(k)) then

@@ -302,10 +302,9 @@ character(len=256) :: nn_filename
         out_var_control = out_var_control + 1
 
 !        advection surface flux is zero
-        t_flux_adv(1) = 0.0 ! This is a verification as it should be automatic like that
+        t_flux_adv(1) = 0.0 
         q_flux_adv(1) = 0.0
         
-!!! Since the flux is on half levels I do not know if we should bound the flux         
         do k=2,nrf
          if (q_flux_adv(k).lt.0) then          
           if ( q(i,j,k).lt.-q_flux_adv(k)* irhoadzdz(k)) then
