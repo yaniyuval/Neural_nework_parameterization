@@ -500,15 +500,15 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
             # Randomly choose a few x's
             truncate_edge = 2  
             indexes_x = list(range(0 + truncate_edge, zTin.shape[2]- truncate_edge))
-            if do_shuffle:  # I wand data for 3D fields - ADDED WHEN wanted to get 3D fields!
+            if do_shuffle:  
                 ind_x = np.arange(0, zTin.shape[2], 1)
-            else:  # I want to shuffle x (but not times)
+            else:  
                 if len(indexes_x) < n_x_samp:
                     indexes_x2 = list(range(0, zTin.shape[2]))
                     ind_x = random.sample(indexes_x2, n_x_samp)
                     if len(indexes_x2) != n_x_samp:
                         raise ValueError('I should choose or all x indices or less than this so I wont have edges')
-                else: # Subset of X's
+                else: 
                     ind_x = random.sample(indexes_x,n_x_samp)
 
 
@@ -647,11 +647,8 @@ def build_training_dataset(expt, start_time, end_time, interval, n_x_samp=5, tra
         randinds = np.random.permutation(n_trn_exs)
         i70 = int(train_size * np.size(randinds))
         i70 = (np.int(i70 / n_x_samp)) * n_x_samp
-        # tst_list = np.arange(i70, int(Tin.shape[3]), 1)
-        # randind_tst = np.random.permutation(tst_list)
-        # randind_tst = tst_list
         randind_trn = np.arange(0, i70, 1)
-        randind_tst = np.arange(i70, int(Tin.shape[2]), 1)# randinds[i70:]
+        randind_tst = np.arange(i70, int(Tin.shape[2]), 1)
     else:
         i70 = int(train_size * Tin.shape[2])
         randind_trn = np.random.permutation(i70)

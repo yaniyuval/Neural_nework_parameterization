@@ -1,0 +1,12 @@
+System for Atmospheric Modeling
+
+Copyright (C) 1997-2022, Marat F. Khairoutdinov
+
+All rights reserved. 
+
+Permission is hereby granted, free of charge, to any person to use, copy, modify, merge, publish, and distribute this software and associated documentation files ("Model"), subject to the following conditions:
+
+The above copyright notice and this permission notice shell be included in all copies or substantial portion of this Model.
+All modified versions of this Model should be distributed under modified name, so as not to confuse with version available from the copyright holders; however, modified name should contain "SAM".
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
