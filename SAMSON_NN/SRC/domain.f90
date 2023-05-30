@@ -19,8 +19,8 @@ module domain
        integer, parameter :: nx_gl = 72 ! Number of grid points in X - Yani changed to 36 from 32
        integer, parameter :: ny_gl = 180 ! Number of grid points in Y
        integer, parameter :: nz_gl = 48 ! Number of pressure (scalar) levels
-       integer, parameter :: nsubdomains_x  = 3 ! No of subdomains in x
-       integer, parameter :: nsubdomains_y  = 12 ! No of subdomains in y
+       integer, parameter :: nsubdomains_x  = 1 ! No of subdomains in x
+       integer, parameter :: nsubdomains_y  = 1 ! No of subdomains in y
 
 ! Note:
 !  * nx_gl and ny_gl should be a factor of 2,3, or 5 (see User's Guide)

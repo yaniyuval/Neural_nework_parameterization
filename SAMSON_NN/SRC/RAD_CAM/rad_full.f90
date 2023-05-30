@@ -129,7 +129,10 @@ subroutine rad_full()
   real(r4) clat(pcols),clon(pcols)
   real(r4) pii
   real(r4) tmp_ggr, tmp_cp, tmp_eps, tmp_ste, tmp_pst
-  real(r4) tasdir,taldir,tasdif,taldif ! peters
+  real(r4) tasdir(pcols) ! peters
+  real(r4) taldir(pcols) ! peters
+  real(r4) tasdif(pcols) ! peters
+  real(r4) taldif(pcols) ! peters
   real(8) wrk1
   ! Supply a generical tropical sounding at a number of pressure
   ! levels.  If the simulation domain does not include the upper
