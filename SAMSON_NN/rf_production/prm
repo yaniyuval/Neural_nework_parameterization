@@ -1,6 +1,6 @@
  &PARAMETERS
 
- nrestart = 2,
+ nrestart = 0,
 
  caseid ='72x180x48',
 
