@@ -49,3 +49,21 @@ mpirun -np 8 SAM_RAD_<RADSCHEME>
 ```
 Results will appear in the locations set up by the Build script and Makefile, linked
 from this directory.
+
+### Selecting the NN implementation
+
+There is the option to run using Janni's original implementation of the NN parametersation
+or our re-implementation.
+For Janni's implementation is contained in the file:
+
+- `nn_convection_flux.f90`
+
+whilst our implementation is contained in:
+
+- `nn_cf_net.f90`
+- `nn_convection_flux.f90`
+- `nn_interface_SAM.f90`
+
+Default behaviour is to run with Janni's implementation, but this can be changed by
+setting `doiccsnn = .true.` in the Case `prm` file.
+

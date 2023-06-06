@@ -145,6 +145,7 @@ integer  int2_dum
 
 logical   dodamping, doupperbound, docloud, doprecip, &
           dorandomforest, do_rf_diffusion, do_rf_q_surf_flux, rf_uses_rh, rf_uses_qp, &  !Yani
+          doiccsnn, &
           do_wind_input_rf, do_z_diffusion_rf, do_q_T_surf_fluxes_rf, do_surf_wind_rf, do_q_surf_fluxes_out_rf, & !New parameters after matlab corrections.
           do_sedimentation_rf, do_fall_tend_rf, do_radiation_output_rf, do_flux_rf, do_hor_advection_rf, do_hor_diffusion_rf, &
           Tin_feature_rf, qin_feature_rf, Tin_z_grad_feature_rf, qin_z_grad_feature_rf, predict_tendencies_rf, do_tkh_z, do_tkh_xy, &

@@ -39,6 +39,7 @@
  do_rf_q_surf_flux = .false.,
  rf_uses_rh     = .false.,
  rf_uses_qp     = .true.,
+ doiccsnn = .true.,
  do_wind_input_rf = .false.,
  do_z_diffusion_rf = .false.,
  do_q_T_surf_fluxes_rf = .false.,
