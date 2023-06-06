@@ -9,9 +9,6 @@ This directory contains the source code from SAMSON (an adaptation of the [SAM](
 The following dependencies are required:
 
 - NetCDF and NetCDF-Fortran
-
-The following are optional dependencies:
-
 - MPI
 
 To build create a symbolic link to your desired `Build` script and `Makefile`.
