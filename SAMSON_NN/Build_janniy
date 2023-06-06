@@ -1,0 +1,65 @@
+#! /bin/csh -f
+
+#source /etc/profile.d/modules.csh
+#module add eaps/pgi/15.10
+#module add openmpi/1.10.7
+#module add netcdf/3.6.2
+
+#module add pgi/17.9
+#module add openmpi
+#module add netcdf
+
+# specify the scratch directory where object files as well as
+# restart and large output data file will be located :
+
+# setenv SAM_SCR /glade/scratch/janniy/sam_init_production_x8_36_NN_out_x2_flux
+setenv SAM_SCR /home/jwa34/hpc-work/SAM 
+
+# ----------------------------------
+# specify radiation directory in SRC
+
+setenv RAD_DIR RAD_CCM
+
+# ----------------------------------
+# specify (GNU) make utility
+
+setenv GNUMAKE 'make -j8'
+
+#--------------------------------------------
+#--------------------------------------------
+#--------------------------------------------
+#--------------------------------------------
+# You don't need to edit below this line.
+
+
+# setenv SAM_DIR  /glade/u/home/janniy/SAMSON_init_production_x8_36_NN_out_x2_flux
+# setenv SAM_OBJ  $SAM_SCR/OBJ
+# setenv SAM_SRC  /glade/u/home/janniy/SAMSON_init_production_x8_36_NN_out_x2_flux/SRC
+
+setenv SAM_DIR  `pwd`
+setenv SAM_OBJ  $SAM_SCR/OBJ
+setenv SAM_SRC  `pwd`/SRC
+
+if !(-d $SAM_SCR) mkdir -p $SAM_SCR
+
+set echo
+
+if !(-d $SAM_OBJ) mkdir $SAM_OBJ
+if !(-d $SAM_SCR/DATA3D) mkdir $SAM_SCR/DATA3D
+if !(-d $SAM_SCR/RESTART) mkdir $SAM_SCR/RESTART
+
+if !(-d RESTART) ln -s $SAM_SCR/RESTART RESTART
+if !(-d DATA3D) ln -s $SAM_SCR/DATA3D  DATA3D
+if !(-d OBJ) ln -s $SAM_SCR/OBJ  OBJ
+
+cd $SAM_OBJ
+
+if ( !(-e Filepath) ) then
+cat >! Filepath << EOF
+$SAM_SRC
+$SAM_SRC/$RAD_DIR
+EOF
+endif
+
+
+$GNUMAKE -f $SAM_DIR/Makefile

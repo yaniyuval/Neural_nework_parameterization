@@ -2195,7 +2195,7 @@ contains
           if((b**2 - 4.*a*c) .lt. 0.) then   ! failure, no real roots
              status = 3
           else
-             q  = -0.5*(b + sign(1.0,b)*sqrt(b**2 - 4.*a*c))
+             q  = -0.5*(b + sign(1d0,b)*sqrt(b**2 - 4.*a*c))
              r1 =  q/a
              r2 =  c/q
           endif
